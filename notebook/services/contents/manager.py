@@ -6,9 +6,9 @@
 from fnmatch import fnmatch
 import itertools
 import json
-import os
 import re
 
+from notebook.services.constants import EXAMPLE_NB, MLSQL_NB
 from tornado.web import HTTPError, RequestHandler
 
 from ...files.handlers import FilesHandler
@@ -30,7 +30,6 @@ from traitlets import (
     default,
 )
 from ipython_genutils.py3compat import string_types
-from notebook.base.handlers import IPythonHandler
 from notebook.transutils import _
 
 
@@ -353,9 +352,12 @@ class ContentsManager(LoggingConfigurable):
         try:
             validate_nb(model['content'])
         except ValidationError as e:
-            model['message'] = u'Notebook validation failed: {}:\n{}'.format(
-                e.message, json.dumps(e.instance, indent=1, default=lambda obj: '<UNKNOWN>'),
-            )
+            self.log.info('validate_notebook_model_error|message: %s' % e.message)
+            validate_cell_id_error = "'id' is a required property"
+            if e.message != validate_cell_id_error:
+                model['message'] = u'Notebook validation failed: {}:\n{}'.format(
+                    e.message, json.dumps(e.instance, indent=1, default=lambda obj: '<UNKNOWN>'),
+                )
         return model
     
     def new_untitled(self, path='', type='', ext=''):
@@ -453,7 +455,8 @@ class ContentsManager(LoggingConfigurable):
             to_path = from_dir
         if self.dir_exists(to_path):
             name = copy_pat.sub(u'.', from_name)
-            to_name = self.increment_filename(name, to_path, insert='-Copy')
+            to_name = from_path if from_path in [EXAMPLE_NB, MLSQL_NB] else \
+                self.increment_filename(name, to_path, insert='-Copy')
             to_path = u'{0}/{1}'.format(to_path, to_name)
         
         model = self.save(model, to_path)

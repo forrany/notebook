@@ -32,40 +32,46 @@ define([
 
     MainToolBar.prototype._make = function () {
         var grps = [
-          [
-            ['jupyter-notebook:save-notebook'],
-            'save-notbook'
-          ],
-          [
-            ['jupyter-notebook:insert-cell-below'],
-            'insert_above_below'],
-          [
-            ['jupyter-notebook:cut-cell',
-             'jupyter-notebook:copy-cell',
-             'jupyter-notebook:paste-cell-below'
-            ] ,
-            'cut_copy_paste'],
-          [
-            ['jupyter-notebook:move-cell-up',
-             'jupyter-notebook:move-cell-down'
+            [
+                [ 
+                    { action: 'jupyter-notebook:insert-cell-code', label: '代码' }, 
+                    { action: 'jupyter-notebook:insert-cell-markdown', label: '文本' }
+                ],
+                'insert_below_with_type'
             ],
-            'move_up_down'],
-          [ [new toolbar.Button('jupyter-notebook:run-cell-and-select-next',
-                {label: i18n.msg._('Run')}),
-             'jupyter-notebook:interrupt-kernel',
-             'jupyter-notebook:confirm-restart-kernel',
-             'jupyter-notebook:confirm-restart-kernel-and-run-all-cells'
-            ],
-            'run_int'],
-         ['<add_celltype_list>'],
-         [
-           ['jupyter-notebook:show-command-palette'],
-           'cmd_palette']
+            [
+                [
+                    'jupyter-notebook:save-notebook',
+                    'jupyter-notebook:run-cell',
+                    'jupyter-notebook:run-all-cells',
+                    // 'jupyter-notebook:show-all-run-time',
+                    // 'jupyter-notebook:hide-all-run-time',
+                    'jupyter-notebook:version-management',
+                    'jupyter-notebook:upload-file',
+                    'jupyter-notebook:notebook-report'
+                ],
+                'step_action_sections'
+            ]
         ];
         this.construct(grps);
     };
 
     MainToolBar.prototype._pseudo_actions = {};
+
+    MainToolBar.prototype._pseudo_actions.add_cpu_RAM_cell = function () {
+        const that = this;
+        const leftIcon = $('<div></div>')
+                        .addClass('fa fa-check')
+                        .attr('style', 'color: rgba(63,192,109,1);width: 16px; height: 16px;');
+        const rightSection = $('<div></div>');
+        const section = $('<div></div>')
+                        .addClass('notebook-cup-crm')
+                        .attr('style', 'width: 120px;display:inline-block; font-size: 12px;')
+                        .append(leftIcon)
+                        .append(rightSection);
+        that.notebook.keyboard_manager.register_events(section);
+        return section;
+    }
 
     // add a cell type drop down to the maintoolbar.
     // triggered when the pseudo action `<add_celltype_list>` is
@@ -78,10 +84,8 @@ define([
             .attr('aria-label', i18n.msg._('combobox, select cell type'))
             .attr('role', 'combobox')
             .addClass('form-control select-xs')
-            .append($('<option/>').attr('value','code').text(i18n.msg._('Code')))
-            .append($('<option/>').attr('value','markdown').text(i18n.msg._('Markdown')))
-            .append($('<option/>').attr('value','raw').text(i18n.msg._('Raw NBConvert')))
-            .append($('<option/>').attr('value','heading').text(i18n.msg._('Heading')))
+            .append($('<option/>').attr('value','code').text('Code'))
+            .append($('<option/>').attr('value','markdown').text('Markdown'))
             .append(multiselect);
         this.notebook.keyboard_manager.register_events(sel);
         this.events.on('selected_cell_type_changed.Notebook', function (event, data) {
@@ -90,6 +94,14 @@ define([
             } else {
                 sel.removeAttr('disabled');
             }
+            /**
+             * 与父级通讯，调用外部方法
+             */
+            window.parent.postMessage({
+                selected: data.cell_type,
+                notebook_id: window.__notebook_id__,
+                eventType: 'languageChanged'
+            }, '*')
 
             if (that.notebook.get_selected_cells_indices().length > 1) {
                 multiselect.show();

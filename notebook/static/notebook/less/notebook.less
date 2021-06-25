@@ -25,20 +25,19 @@ div#notebook {
     overflow-x: auto;
     width: 100%;
     /* This spaces the page away from the edge of the notebook area */
-    padding-top: @page-header-padding;
     padding-bottom: @page-header-padding;
     margin: 0px;
     outline: none;
     .border-box-sizing();
     min-height: 100%;
+    background-color: #FFFFFF;
 }
 
 #notebook-container{
     @media not print{
-        padding: @page-padding;
+        padding: 32px 0 24px;
         background-color :  @page-color;
         min-height: @page-min-height;
-        .box-shadow(@global-shadow);
     }
     @media print {
         width: 100%;
@@ -81,12 +80,13 @@ p {
 }
 
 .notebook_app > #header {
-    .box-shadow(@global-shadow);
+    border-bottom: 1px solid #DCDEE5;
 }
 
 .notebook_app{
     @media not print {
         background-color: @page-backdrop-color;
+        overflow: hidden;
     }
 }
 
@@ -125,4 +125,22 @@ kbd {
     padding: 2px;
     padding-top: 1px;
     padding-bottom: 1px;
+}
+
+.ui-tooltip.custom-tooltips-cls {
+    color: #FFFFFF;
+    font-size: 12px;
+    padding: 4px 10px 6px;
+    background-color: rgba(0,0,0,.8);
+    border-radius: 2px;
+    border: none ;
+    &::before {
+        content: '';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-bottom: 6px solid rgba(0, 0, 0, 0.8);
+    }
 }

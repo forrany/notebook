@@ -86,6 +86,10 @@ define([
      * @param {string}          options.notebook_name
      */
     function Notebook(selector, options) {
+        this.username = ''
+        this.awaitGetUsername = null
+        this.send_save_tips = false
+        this.bkInfo = {}
         this.config = options.config;
         this.config.loaded.then(this.validate_config.bind(this));
         this.class_config = new configmod.ConfigWithDefaults(this.config, 
@@ -250,6 +254,9 @@ define([
         
         // prevent assign to miss-typed properties.
         Object.seal(this);
+
+        // 开启行号
+        this.toggle_all_line_numbers()
     }
 
     Notebook.options_default = {
@@ -405,7 +412,75 @@ define([
             var time = (extrap !== undefined) ? ((extrap.duration !== undefined ) ? extrap.duration : 'fast') : 'fast';
             expand_time(time);
         });
+        
+        /**
+         * 添加状态监听，当父级调用时，返回当前编辑器状态
+         */
+        window.addEventListener('message', event => {
+            if (event.data.eventType === 'getEditStatus') {
+                utils.post_message({
+                    status: that.dirty,
+                    eventType: 'editStatus'
+                })
+            } else if ( event.data.eventType === 'sendBKInfor') {
+                this.session.send_bk_infor(event.data.bkInfor, success => {
+                    console.log('成功')
+                }, error => {
+                    console.warn('失败')
+                })
+            } else if ( event.data.eventType === 'postBkUserInfo') {
+                this.bkInfo = event.data.bkInfo || {}
+                window.__notebook_id__ = this.bkInfo.notebook_id
+            } else if (event.data.eventType === 'saveNoteConfirm') {
+                var data = event.data
+                if (data.saveAsNew) {
+                    that.save_checkpoint().then(
+                        function (data) {
+                            if (data.result || data.name) {
+                                that.note_submit(event.data.params)
+                            } else {
+                                utils.post_message({
+                                    eventType: 'saveNoteStatus',
+                                    res: data
+                                })
+                            }
+                        },
+                        function (e) {
+                            var res = {
+                                result: false,
+                                message: e.xhr.statusText
+                            }
+                            utils.post_message({
+                                eventType: 'saveNoteStatus',
+                                res: res
+                            })
+                        }
+                    )
+                } else {
+                    that.save_checkpoint()
+                    this.send_save_tips = data.statusTips
+                }
+            } else if (event.data.eventType === 'deleteNoteVersion') {
+                this.note_delete_history(event.data.params)
+            } else if (event.data.eventType === 'noteDiff') {
+                this.note_diff(event.data.commitId)
+            } else if (event.data.eventType === 'rollBackVersion') {
+                this.note_rollback(event.data.commitId)
+            } else if (event.data.eventType === 'getUsername') {
+                this.username = event.data.username
+                this.awaitGetUsername && this.awaitGetUsername()
+            }
+        })
 
+        // 添加点击监听
+        window.addEventListener('click', event => {
+            if (!document.querySelector("#step_action_sections").contains(event.target)) {
+                utils.post_message({
+                    eventType: 'hiddenSaveNotePop',
+                    hidden: true
+                })
+            }
+        })
 
         // Firefox 22 broke $(window).on("beforeunload")
         // I'm not sure why or how.
@@ -948,10 +1023,11 @@ define([
      */
     Notebook.prototype.command_mode = function () {
         var cell = this.get_cell(this.get_edit_index());
-        if (cell && this.mode !== 'command') {
+        if (cell && this.mode !== 'command' && cell.code_mirror) {
             // We don't call cell.command_mode, but rather blur the CM editor
             // which will trigger the call to handle_command_mode.
-            cell.code_mirror.getInputField().blur();
+            cell.code_mirror && cell.code_mirror.getInputField().blur();
+            cell.markdown_editor.blur();
         }
     };
 
@@ -999,6 +1075,7 @@ define([
         var cell = this.get_selected_cell();
         if (cell === null) {return;}  // No cell is selected
         cell.focus_cell();
+        cell.cell_type === 'markdown' && cell.unrender();
     };
 
     // Cell movement
@@ -2228,7 +2305,18 @@ define([
     /**
      * Start a new session and set it on each code cell.
      */
-    Notebook.prototype.start_session = function (kernel_name) {
+    Notebook.prototype.start_session = async function (kernel_name) {
+        if (!this.username) {
+            var getUsernamePromise = new Promise((resolve, reject) => {
+                this.awaitGetUsername = resolve
+                utils.post_message({ eventType: 'getUsername' })
+            })
+            // 如果10s内没有响应就继续往下执行
+            setTimeout(() => {
+                this.awaitGetUsername && this.awaitGetUsername()
+            }, 10000)
+            await getUsernamePromise
+        }
         if (this._session_starting) {
             throw new session.SessionAlreadyStarting();
         }
@@ -2240,7 +2328,8 @@ define([
             notebook_path: this.notebook_path,
             notebook_name: this.notebook_name,
             kernel_name: kernel_name,
-            notebook: this
+            notebook: this,
+            username: this.username
         };
 
         var success = $.proxy(this._session_started, this);
@@ -2754,7 +2843,8 @@ define([
         // Create a JSON model to be sent to the server.
         var model = {
             type : "notebook",
-            content : this.toJSON()
+            content : this.toJSON(),
+            bk_username: this.bkInfo.username
         };
         // time the ajax call for autosave tuning purposes.
         var start =  new Date().getTime();
@@ -2846,9 +2936,7 @@ define([
             var title = i18n.msg._("Notebook validation failed");
 
             body.append($("<p>").text(
-                i18n.msg._("The save operation succeeded," +
-                " but the notebook does not appear to be valid." +
-                " The validation error was:")
+                i18n.msg._("The save operation failed. The validation error was:")
             )).append($("<div>").addClass("validation-error").append(
                 $("<pre>").text(data.message)
             ));
@@ -2870,6 +2958,17 @@ define([
             this.create_checkpoint();
             this._checkpoint_after_save = false;
         }
+
+        // 数据平台提示保存成功
+        if (this.send_save_tips && (data.result || data.name)) {
+            utils.post_message({
+                eventType: 'saveNoteStatus',
+                res: {
+                    result: true
+                }
+            })
+        }
+        this.send_save_tips = false
         return data;
     };
 
@@ -3280,6 +3379,12 @@ define([
         
         // now that we're fully loaded, it is safe to restore save functionality
         this._fully_loaded = true;
+
+        /** 通知父级可以进行消息传递 */
+        utils.post_message({
+            eventType: 'readyToRecieveMsg'
+        })
+        
         this.events.trigger('notebook_loaded.Notebook');
     };
 
@@ -3339,6 +3444,127 @@ define([
         return this.save_notebook(true);
     };
     
+    /**
+     * submit notebook.
+     */
+    Notebook.prototype.note_submit = async function (params) {
+        var res = {}
+        try {
+            var model = {
+                bk_username: this.bkInfo.username
+            };
+            res = await this.contents.submit_notebook(this.notebook_path, Object.assign(model, params))
+        } catch (e) {
+            res = {
+                result: false,
+                message: e.xhr.statusText
+            }
+        }
+        utils.post_message({
+            eventType: 'saveNoteStatus',
+            res: res
+        })
+    };
+    
+    /**
+     * diff notebook.
+     */
+    Notebook.prototype.note_diff = async function (commitId) {
+        var res = {}
+        var lastDate = moment(this.last_modified).format('YYYY-MM-DD HH:mm:ss')
+        try {
+            var model = {
+                commit_id: commitId
+            }
+            res = await this.contents.get_notebook_diff(this.notebook_path, model)
+        } catch (e) {
+            res = {
+                result: false,
+                message: e.xhr.statusText
+            }
+        }
+        utils.post_message({
+            eventType: 'diffNoteContents',
+            res: res,
+            lastDate: lastDate
+        })
+    };
+    
+    /**
+     * notebook history.
+     */
+    Notebook.prototype.note_history = async function () {
+        var res = {}
+        var defaultDate = moment(this.save_widget._checkpoint_date).format('YYYY-MM-DD HH:mm:ss')
+        try {
+            res = await this.contents.get_notebook_history(this.notebook_path)
+            if (res.result) {
+                res.data = res.data || []
+                res.data.unshift({
+                    'is_default': true,
+                    'commit_id': '',
+                    'commit_time': defaultDate,
+                    'commit_message': i18n.msg._("Automatically save to this version every minute"),
+                    'version': i18n.msg._("Current version"),
+                    'author': this.bkInfo.username
+                })
+            }
+        } catch (e) {
+            res = {
+                result: false,
+                message: e.xhr.statusText
+            }
+        }
+        utils.post_message({
+            eventType: 'noteVersionManagement',
+            res: res,
+            isShow: true
+        })
+    };
+    
+    /**
+     * notebook rollback.
+     */
+    Notebook.prototype.note_rollback = async function (id) {
+        var res = {}
+        try {
+            var model = {
+                commit_id: id,
+                bk_username: this.bkInfo.username
+            }
+            res = await this.contents.rollback_notebook(this.notebook_path, model)
+        } catch (e) {
+            res = {
+                result: false,
+                message: e.xhr.statusText
+            }
+        }
+        utils.post_message({
+            eventType: 'rollBackVersion',
+            res: res
+        })
+    };
+    
+    /**
+     * notebook delete history.
+     */
+    Notebook.prototype.note_delete_history = async function (params) {
+        var res = {}
+        try {
+            res = await this.contents.note_delete_history(this.notebook_path, params)
+        } catch (e) {
+            res = {
+                result: false,
+                message: e.xhr.statusText
+            }
+        }
+        utils.post_message({
+            eventType: 'deleteNoteVersion',
+            res: res,
+            commitId: params.commit_id
+        })
+    };
+
     /**
      * Add a checkpoint for this notebook.
      */

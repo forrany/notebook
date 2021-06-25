@@ -1,11 +1,11 @@
 span.save_widget {
-    height: 30px;
-    margin-top: 4px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: baseline;
-    width: 50%;
-    flex: 1;
+    display: inline-block;
+    vertical-align: middle;
+    height: 28px;
+    line-height: 28px;
+    padding: 0 6px;
+    border-radius: 2px;
+    margin-left: 14px;
     
     span.filename {
         height: 100%;
@@ -42,6 +42,11 @@ span.checkpoint_status, span.autosave_status {
     padding: 0 5px;
 }
 
+span.custom_autosave_info {
+    font-size: 14px;
+    color: #979BA5;
+}
+
 @media (max-width: @screen-xs-max) {
     span.save_widget {
         font-size: small;
@@ -58,5 +63,23 @@ span.checkpoint_status, span.autosave_status {
     }
     span.autosave_status {
         font-size: x-small;
+    }
+}
+
+@media (max-width: 902px) {
+    span.save_widget {
+        right: 24px;
+    }
+}
+
+@media (max-width: 880px) {
+    span.save_widget {
+        right: 60px;
+    }
+}
+
+@media (max-width: 806px) {
+    span.save_widget {
+        right: 70px;
     }
 }

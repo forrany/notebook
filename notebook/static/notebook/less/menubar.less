@@ -1,3 +1,16 @@
+#menubar-container {
+    .document-url {
+        position: absolute;
+        right: 25px;
+        top: 0;
+        color: #3a84ff;
+        line-height: 44px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        z-index: 10;
+    }
+}
 #menubar {
   .border-box-sizing();
   margin-top: 1px;
@@ -137,6 +150,34 @@ ul#help_menu li a{
 .dropdown-submenu.pull-left>.dropdown-menu {
     left: -100%;
     margin-left: 10px;
+}
+.split-line () {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 20px;
+    background-color: #DCDEE5;
+}
+
+#insert_below_with_type {
+    padding-right: 20px;
+    &::after {
+        .split-line()
+    }
+}
+
+#more_action_sections {
+    padding: 0 24px;
+    &::after {
+        .split-line()
+    }
+}
+
+#step_action_sections {
+    padding-left: 20px;
 }
 
 //end submenu

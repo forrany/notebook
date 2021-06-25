@@ -63,6 +63,10 @@ define([
         });
         this.events.on('set_dirty.Notebook', function (event, data) {
             that.set_autosaved(data.value);
+            if (!data.value) {
+                that._checkpoint_date = moment()
+                that._render_checkpoint()
+            }
         });
     };
 
@@ -194,6 +198,8 @@ define([
         }
         
         el.text(i18n.msg.sprintf(i18n.msg._('Last Checkpoint: %s'),human_date)).attr('title', long_date);
+
+        this.set_autosaved_update_time(chkd)
     };
 
     
@@ -221,6 +227,16 @@ define([
         } else {
             this.set_save_status(i18n.msg._("(autosaved)"));
         }
+    };
+
+    SaveWidget.prototype.set_autosaved_update_time = function (date) {
+        if (!date) {
+            return
+        }
+        var el = this.element.find('span.custom_autosave_info');
+        var last_save_time = date.format('HH:mm');
+        el.text(i18n.msg.sprintf(i18n.msg._('Last Save Time: %s'),last_save_time))
+        // this.element.attr("title", i18n.msg._('View version management')).attr("data-toggle", "tooltip")
     };
 
     return {'SaveWidget': SaveWidget};

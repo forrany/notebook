@@ -14,7 +14,10 @@
     {% block stylesheet %}
     <link rel="stylesheet" href="{{ static_url("style/style.min.css") }}" type="text/css"/>
     {% endblock %}
+    <link rel="stylesheet" href="{{static_url("mditor/mditor.min.css")}}" />
+    <link rel="stylesheet" href="{{static_url("bk-icon-bkdata/index.css") }}" type="text/css" />
     <link rel="stylesheet" href="{{ base_url }}custom/custom.css" type="text/css" />
+    <link rel="stylesheet" href="{{static_url("chart/main.full.css") }}" type="text/css" />
     <script src="{{static_url("components/es6-promise/promise.min.js")}}" type="text/javascript" charset="utf-8"></script>
     <script src="{{static_url('components/react/react.production.min.js')}}" type="text/javascript"></script>
     <script src="{{static_url('components/react/react-dom.production.min.js')}}" type="text/javascript"></script>
@@ -44,6 +47,8 @@
             codemirror: 'components/codemirror',
             termjs: 'components/xterm.js/xterm',
             typeahead: 'components/jquery-typeahead/dist/jquery.typeahead.min',
+            editormd: 'components/',
+            jqueryLoading: 'components/gasparesganga-jquery-loading-overlay/dist/loadingoverlay.min'
           },
           map: { // for backward compatibility
               "*": {
@@ -71,6 +76,10 @@
               exports: "Tour"
             },
             "jquery-ui": {
+              deps: ["jquery"],
+              exports: "$"
+            },
+            "jqueryLoading": {
               deps: ["jquery"],
               exports: "$"
             }
@@ -124,7 +133,7 @@ dir="ltr">
 
 <div id="header" role="navigation" aria-label="{% trans %}Top Menu{% endtrans %}">
   <div id="header-container" class="container">
-  <div id="ipython_notebook" class="nav navbar-brand"><a href="{{default_url}}
+  <div id="ipython_notebook" class="nav navbar-brand" style="display: none;"><a href="{{default_url}}
     {%- if logged_in and token -%}?token={{token}}{%- endif -%}" title='{% trans %}dashboard{% endtrans %}'>
       {% block logo %}<img src='{{static_url("base/images/logo.png") }}' alt='Jupyter Notebook'/>{% endblock %}
   </a></div>
@@ -136,7 +145,7 @@ dir="ltr">
   
   {% block login_widget %}
 
-    <span id="login_widget">
+    <span id="login_widget" style="display: none;">
       {% if logged_in %}
         <button id="logout" class="btn btn-sm navbar-btn">{% trans %}Logout{% endtrans %}</button>
       {% elif login_available and not logged_in %}
@@ -149,7 +158,7 @@ dir="ltr">
   {% endblock header_buttons %}
   
   </div>
-  <div class="header-bar"></div>
+  <!-- <div class="header-bar"></div> -->
 
   {% block header %}
   {% endblock %}
@@ -165,7 +174,8 @@ dir="ltr">
 
 {% block script %}
 {% endblock %}
-
+<script src="{{static_url("mditor/mditor.min.js")}}"></script>
+<script src="{{static_url("chart/main.full.js")}}"></script>
 <script type='text/javascript'>
   function _remove_token_from_url() {
     if (window.location.search.length <= 1) {

@@ -5,11 +5,14 @@
 # Distributed under the terms of the Modified BSD License.
 
 import json
+import os
 import struct
 import sys
 from urllib.parse import urlparse
 
 import tornado
+
+from notebook.services.constants import RESPONSE_MESSAGE, FORBIDDEN_DATA
 from tornado import gen, ioloop, web
 from tornado.iostream import StreamClosedError
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
@@ -18,6 +21,7 @@ from jupyter_client.session import Session
 from jupyter_client.jsonutil import date_default, extract_dates
 from ipython_genutils.py3compat import cast_unicode
 
+from notebook.services.pizza_api import check_project_auth
 from notebook.utils import maybe_future
 from .handlers import IPythonHandler
 
@@ -237,12 +241,67 @@ class ZMQStreamHandler(WebSocketMixin, WebSocketHandler):
             return cast_unicode(smsg)
 
     def _on_zmq_reply(self, stream, msg_list):
+
+        def process_bk_chart():
+            """
+            处理图表可视化类型
+            """
+            if msg_list['msg_type'] == 'execute_result' and 'text/plain' in msg_list['content']['data']:
+                text_content = msg_list['content']['data']['text/plain']
+                try:
+                    json_obj = json.loads(text_content)
+                    if isinstance(json_obj, dict) and 'bk_chart' in json_obj:
+                        json_obj['list'] = json.dumps((json_obj['list']))
+                        json_obj['select_fields_order'] = json.dumps(json_obj['select_fields_order'])
+                        msg_list['content']['data'] = json_obj
+                except ValueError as e:
+                    self.log.error("json parse error|message: %s", str(e))
+
+        def process_interrupt():
+            """
+            处理中断操作，从堆栈报错改为中断提示
+            """
+            if (
+                msg_list["msg_type"] in ("execute_reply", "error")
+                and msg_list["content"].get("ename") == "KeyboardInterrupt"
+            ):
+                msg_list["content"]["traceback"] = ["interrupt success"]
+
+        def process_sensitive_data():
+            """
+            处理返回数据中的敏感内容，比如平台域名等
+            """
+            result = (
+                msg_list["content"]["text"]
+                if msg_list["msg_type"] == "stream"
+                else msg_list["content"]["data"]["text/plain"]
+                if msg_list["msg_type"] == "execute_result" and "text/plain" in msg_list["content"]["data"]
+                else ""
+            )
+            if result and any(
+                    forbidden_data for forbidden_data in FORBIDDEN_DATA if forbidden_data and forbidden_data in result):
+                message = "The result contains sensitive data such as api host that cannot be displayed"
+                if msg_list["msg_type"] == "stream":
+                    msg_list["content"]["text"] = message
+                else:
+                    msg_list["content"]["data"]["text/plain"] = message
+
         # Sometimes this gets triggered when the on_close method is scheduled in the
         # eventloop but hasn't been called.
         if self.ws_connection is None or stream.closed():
             self.log.warning("zmq message arrived on closed channel")
             self.close()
             return
+        jupyter_username = os.environ.get('JUPYTERHUB_USER')
+        if jupyter_username and jupyter_username.isdigit() and msg_list['content'].get('name') == 'stdout':
+            bk_username = msg_list['header']['username'] if msg_list['header']['username'] != 'username' \
+                else msg_list['parent_header']['username']
+            status, code = check_project_auth(jupyter_username, bk_username)
+            if not status:
+                msg_list['content']['text'] = RESPONSE_MESSAGE.get(code)
+        process_bk_chart()
+        process_interrupt()
+        process_sensitive_data()
         channel = getattr(stream, 'channel', None)
         try:
             msg = self._reserialize_reply(msg_list, channel=channel)

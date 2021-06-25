@@ -75,14 +75,33 @@
     blockquote {margin: 1em 2em;}
 
     table {
-        margin-left: auto;
-        margin-right: auto;
         border: none;
         border-collapse: collapse;
         border-spacing: 0;
         color: @rendered_html_border_color;
         font-size: 12px;
         table-layout: fixed;
+        tr {
+            background-color: rgb(255, 255, 255);
+            border-top: 1px solid rgb(198, 203, 209);
+            &:nth-child(2n) {
+                background-color: rgb(246, 248, 250);
+            }
+        }
+        th {
+            padding: 6px 13px;
+            border-width: 1px;
+            border-style: solid;
+            border-color: rgb(223, 226, 229);
+            border-image: initial;
+        }
+        td {
+            padding: 6px 13px;
+            border-width: 1px;
+            border-style: solid;
+            border-color: rgb(223, 226, 229);
+            border-image: initial;
+        }
     }
     thead {
         border-bottom: 1px solid @rendered_html_border_color;
@@ -99,9 +118,6 @@
     }
     th {
         font-weight: bold;
-    }
-    tbody tr:nth-child(odd) {
-        background: #f5f5f5;
     }
     tbody tr:hover {
         background: rgba(66, 165, 245, 0.2);

@@ -11,6 +11,7 @@
 
 define([
     'jquery',
+    'jqueryLoading',
     'base/js/namespace',
     'base/js/utils',
     'base/js/i18n',
@@ -22,9 +23,12 @@ define([
     'notebook/js/celltoolbar',
     'codemirror/lib/codemirror',
     'codemirror/mode/python/python',
-    'notebook/js/codemirror-ipython'
+    'notebook/js/codemirror-ipython',
+    'notebook/js/cellfixedtoolbar',
+    'moment'
 ], function(
     $,
+    $loading,
     IPython,
     utils,
     i18n,
@@ -36,7 +40,9 @@ define([
     celltoolbar,
     CodeMirror,
     cmpython,
-    cmip
+    cmip,
+    cellfixedtoolbar,
+    moment
     ) {
     "use strict";
     
@@ -107,6 +113,8 @@ define([
         // even if null for V8 VM optimisation
         this.input_prompt_number = null;
         this.celltoolbar = null;
+        this.insert_cell_toobar = null;
+        this.actions_toolbar = null;
         this.output_area = null;
 
         this.last_msg_id = null;
@@ -123,6 +131,10 @@ define([
         this.element.focusout(
             function() { that.auto_highlight(); }
         );
+        // 执行时间
+        this.execute_timer = null
+        this.execute_time = 0
+        this.execute_unit_is_ms = true
     };
 
     CodeCell.options_default = {
@@ -164,11 +176,23 @@ define([
         var prompt_container = $('<div/>').addClass('prompt_container');
 
         var run_this_cell = $('<div></div>').addClass('run_this_cell');
-        run_this_cell.prop('title', 'Run this cell');
-        run_this_cell.append('<i class="fa-step-forward fa"></i>');
+        run_this_cell.prop('title', i18n.msg._('Run'));
+        run_this_cell.append('<i class="icon-play-6"></i>');
         run_this_cell.click(function (event) {
             event.stopImmediatePropagation();
             that.execute();
+        });
+        
+        var stop_this_cell = $('<div></div>').addClass('stop_this_cell');
+        stop_this_cell.prop('title', i18n.msg._('interrupt the kernel'));
+        stop_this_cell.append('<span class="stop-btn"></span>');
+        stop_this_cell.append('<span class="running-time"></span>');
+        stop_this_cell.find('span.stop-btn').click(function (event) {
+            event.stopImmediatePropagation();
+            if (that.kernel) {
+                that.kernel.interrupt()
+                $('.stop-btn').LoadingOverlay('show')
+            }
         });
 
         var prompt = $('<div/>').addClass('prompt input_prompt');
@@ -177,6 +201,7 @@ define([
         this.celltoolbar = new celltoolbar.CellToolbar({
             cell: this, 
             notebook: this.notebook});
+        
         inner_cell.append(this.celltoolbar.element);
         var input_area = $('<div/>').addClass('input_area').attr("aria-label", i18n.msg._("Edit code here"));
         this.code_mirror = new CodeMirror(input_area.get(0), this._options.cm_config);
@@ -192,11 +217,57 @@ define([
         this.code_mirror.on('keydown', $.proxy(this.handle_keyevent,this));
         $(this.code_mirror.getInputField()).attr("spellcheck", "false");
         inner_cell.append(input_area);
-        prompt_container.append(prompt).append(run_this_cell);
+        prompt_container.append(prompt).append(run_this_cell).append(stop_this_cell);
         input.append(prompt_container).append(inner_cell);
 
         var output = $('<div></div>');
-        cell.append(input).append(output);
+        const action_bar_container = $('<div></div>');
+        this.actions_toolbar = new cellfixedtoolbar.CellFixedToolBar(action_bar_container, {
+            notebook: this.notebook,
+            events: this.keyboard_manager.events,
+            actions: this.keyboard_manager.actions,
+            render_default: true
+            
+        });
+
+        const btns = [{
+            label: '代码',
+            icon: 'icon-add-9',
+            cell_type: 'code'
+        }, {
+            label: '文本',
+            icon: 'icon-add-9',
+            cell_type: 'markdown'
+        }]
+        const btn_group = $('<div></div>').addClass('btn-group');
+        for (let i = 0; i < btns.length; i++) {
+            var button  = $('<button/>')
+                .addClass('btn btn-default')
+                .attr("title", i18n.msg._(btns[i].label))
+                .attr("data-toggle", "tooltip")
+                .append(
+                    $("<i/>").addClass(btns[i].icon).addClass('fa')
+                )
+                .append(
+                    $('<span/>').text(i18n.msg._(btns[i].label)).addClass('toolbar-btn-label')
+                );
+            button.click(function () {
+                const index = that.notebook.find_cell_index(that)
+                that.notebook.insert_cell_below(btns[i].cell_type, index);
+                that.notebook.select(index + 1, true);
+                that.notebook.focus_cell();
+            })
+            btn_group.append(button)
+        }
+        const bottom_hover_bars = $('<div></div>')
+            .addClass('cell-empty-hover cell-insert-bar')
+            .append(btn_group)
+
+        cell.append(input)
+            .append(output)
+            .append(action_bar_container)
+            .append(bottom_hover_bars);
+
         this.element = cell;
         this.output_area = new outputarea.OutputArea({
             config: this.config,
@@ -344,30 +415,46 @@ define([
         }
 
         this.clear_output(false, true);
+        var cell_content = this.get_text()
         var old_msg_id = this.last_msg_id;
         if (old_msg_id) {
             this.kernel.clear_callbacks_for_msg(old_msg_id);
             delete CodeCell.msg_cells[old_msg_id];
             this.last_msg_id = null;
         }
-        if (this.get_text().trim().length === 0) {
+        if (cell_content.trim().length === 0) {
             // nothing to do
             this.set_input_prompt(null);
             return;
         }
         this.set_input_prompt('*');
         this.element.addClass("running");
+
+        var execute_timer_span = this.element.find('span.running-time')
+        this.execute_time = 0
+        execute_timer_span.text(this.execute_time)
+        if (this.execute_timer) {
+            clearInterval(this.execute_timer)
+        }
+        this.execute_timer = setInterval(() => {
+            this.execute_time += 0.1
+            execute_timer_span.text(this.execute_time.toFixed(1) + ' s')
+            this.execute_unit_is_ms = false
+        }, 100)
+        this.element.find('span.running-time').text()
         var callbacks = this.get_callbacks();
         
-        this.last_msg_id = this.kernel.execute(this.get_text(), callbacks, {silent: false, store_history: true,
-            stop_on_error : stop_on_error});
+        this.last_msg_id = this.kernel.execute(cell_content, callbacks, {silent: false, store_history: true,
+            stop_on_error : stop_on_error, cell_id: this.cell_id});
         CodeCell.msg_cells[this.last_msg_id] = this;
+        this.output_area.update_cell_content(cell_content)
         this.render();
         this.events.trigger('execute.CodeCell', {cell: this});
         var that = this;
         function handleFinished(evt, data) {
             if (that.kernel.id === data.kernel.id && that.last_msg_id === data.msg_id) {
                     that.events.trigger('finished_execute.CodeCell', {cell: that});
+                    that.notebook.save_checkpoint()
                 that.events.off('finished_iopub.Kernel', handleFinished);
               }
         }
@@ -412,8 +499,27 @@ define([
      * @private
      */
     CodeCell.prototype._handle_execute_reply = function (msg) {
+        // 显示执行时间
+        if (this.execute_timer) {
+            clearInterval(this.execute_timer)
+        }
+        var start_time = moment(msg.metadata.started)
+        var end_time = msg.header.date
+        if (end_time) {
+            end_time = moment(end_time)
+            var exec_time = -start_time.diff(end_time)
+            var execute_timer_span = this.element.find('span.running-time')
+            if (this.execute_unit_is_ms) {
+                execute_timer_span.text(Math.round(exec_time) + ' ms')
+            } else {
+                exec_time = (exec_time / 1000).toFixed(1)
+                execute_timer_span.text(exec_time + ' s')
+            }
+        }
+
         this.set_input_prompt(msg.content.execution_count);
         this.element.removeClass("running");
+        $('.stop-btn').LoadingOverlay('hide')
         this.events.trigger('set_dirty.Notebook', {value: true});
     };
 
@@ -493,11 +599,12 @@ define([
     CodeCell.input_prompt_classical = function (prompt_value, lines_number) {
         var ns;
         if (prompt_value === undefined || prompt_value === null) {
-            ns = "&nbsp;";
+            ns = "_";
         } else {
             ns = encodeURIComponent(prompt_value);
         }
-        return '<bdi>'+i18n.msg._('In')+'</bdi>&nbsp;[' + ns + ']:';
+        return '[' + ns + ']&nbsp;';
+        // return '<bdi>'+i18n.msg._('In')+'</bdi>&nbsp;[' + ns + ']:';
     };
 
     CodeCell.input_prompt_continuation = function (prompt_value, lines_number) {
@@ -551,6 +658,7 @@ define([
 
     CodeCell.prototype.fromJSON = function (data) {
         Cell.prototype.fromJSON.apply(this, arguments);
+        this.output_area.update_cell_content(data.source)
         if (data.cell_type === 'code') {
             if (data.source !== undefined) {
                 this.set_text(data.source);
@@ -588,6 +696,7 @@ define([
         } else {
             data.metadata.scrolled = this.output_area.scroll_state;
         }
+
         return data;
     };
 

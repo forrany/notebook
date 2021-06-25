@@ -13,7 +13,8 @@ define([
     'components/marked/lib/marked',
     'codemirror/lib/codemirror',
     'codemirror/mode/gfm/gfm',
-    'notebook/js/codemirror-ipythongfm'
+    'notebook/js/codemirror-ipythongfm',
+    'notebook/js/cellfixedtoolbar'
 ], function(
     $,
     utils,
@@ -26,7 +27,8 @@ define([
     marked,
     CodeMirror,
     gfm,
-    ipgfm
+    ipgfm,
+    cellfixedtoolbar
     ) {
     "use strict";
     function encodeURIandParens(uri){return encodeURI(uri).replace('(','%28').replace(')','%29')}
@@ -57,6 +59,7 @@ define([
         this.notebook = options.notebook;
         this.events = options.events;
         this.config = options.config;
+        this.actions_toolbar = null;
 
         // we cannot put this as a class key as it has handle to "this".
         Cell.apply(this, [{
@@ -90,30 +93,114 @@ define([
 
         var cell = $("<div>").addClass('cell text_cell');
         cell.attr('tabindex','2');
+        var prompt_container = $('<div/>').addClass('prompt_container');
+        var run_this_cell = $('<div></div>').addClass('run_this_cell');
+        run_this_cell.prop('title', 'Run this cell');
+        run_this_cell.append('<i class="icon-play-6"></i>');
+        run_this_cell.click(function (event) {
+            event.stopImmediatePropagation();
+            that.execute();
+        });
 
         var prompt = $('<div/>').addClass('prompt input_prompt');
-        cell.append(prompt);
+        var prompt_container = $('<div/>').addClass('prompt_container');
+        var run_this_cell = $('<div></div>').addClass('run_this_cell');
+        run_this_cell.prop('title', 'Run this cell');
+        run_this_cell.append('<i class="icon-play-6"></i>');
+        run_this_cell.click(function (event) {
+            event.stopImmediatePropagation();
+            that.execute();
+        });
+
+        prompt_container.append(prompt).append(run_this_cell);
+    
+        cell.append(prompt_container);
         var inner_cell = $('<div/>').addClass('inner_cell');
         this.celltoolbar = new celltoolbar.CellToolbar({
             cell: this, 
             notebook: this.notebook});
         inner_cell.append(this.celltoolbar.element);
         var input_area = $('<div/>').addClass('input_area').attr("aria-label", i18n.msg._("Edit Markup Text here"));
-        this.code_mirror = new CodeMirror(input_area.get(0), this._options.cm_config);
-        // In case of bugs that put the keyboard manager into an inconsistent state,
-        // ensure KM is enabled when CodeMirror is focused:
-        this.code_mirror.on('focus', function () {
-            if (that.keyboard_manager) {
-                that.keyboard_manager.enable();
-            }
-            that.code_mirror.setOption('readOnly', !that.is_editable());
-        });
-        this.code_mirror.on('keydown', $.proxy(this.handle_keyevent,this))
+        var markdown_wrapper = $('<textarea/>').addClass('markdown_editor')
+        input_area.append(markdown_wrapper)
+        this.markdown_editor = Mditor.fromTextarea(markdown_wrapper.get(0));
+        
+        /**
+         * In case of bugs that put the keyboard manager into an inconsistent state,
+         * ensure KM is enabled when CodeMirror is focused
+         * 
+         * 聚焦时，将mode变为edit，全局的键盘事件改变
+         * 失去焦点时，mode为command，键盘事件由notebook接管
+         * keydown时，触发keyevnet，keyevent内部会根据mode来做相关判定
+         * 
+         */
+        this.markdown_editor.on('ready', function() {
+            input_area.find('.textarea').on('focus', function () {
+                that.events.trigger('edit_mode.Cell', {cell: that});
+                if (that.keyboard_manager) {
+                    that.keyboard_manager.enable();
+                }
+            }).on('blur', function(cm, change) {
+                setTimeout(() => {
+                    if (!that.selected) { // 如果已经没有被选择，说明点击了其他Cell
+                        that.events.trigger('command_mode.Cell', {cell: that});
+                        that.execute()
+                    }
+                }, 100);
+            }).on('keydown', $.proxy(this.handle_keyevent,this))
+            that.markdown_editor.focus()
+        })
+
         // The tabindex=-1 makes this div focusable.
         var render_area = $('<div/>').addClass('text_cell_render rendered_html')
             .attr('tabindex','-1');
         inner_cell.append(input_area).append(render_area);
         cell.append(inner_cell);
+
+
+        const action_bar_container = $('<div></div>');
+        this.cellfixedtoolbar = new cellfixedtoolbar.CellFixedToolBar(action_bar_container, {
+            notebook: this.notebook,
+            events: this.keyboard_manager.events,
+            actions: this.keyboard_manager.actions,
+            render_default: true
+        });
+        cell.append(action_bar_container);
+        
+        const btns = [{
+            label: '代码',
+            icon: 'icon-add-9',
+            cell_type: 'code'
+        }, {
+            label: '文本',
+            icon: 'icon-add-9',
+            cell_type: 'markdown'
+        }]
+        const btn_group = $('<div></div>').addClass('btn-group');
+        for (let i = 0; i < btns.length; i++) {
+            var button  = $('<button/>')
+                .addClass('btn btn-default')
+                .attr("title", i18n.msg._(btns[i].label))
+                .attr("data-toggle", "tooltip")
+                .append(
+                    $("<i/>").addClass(btns[i].icon).addClass('fa')
+                )
+                .append(
+                    $('<span/>').text(i18n.msg._(btns[i].label)).addClass('toolbar-btn-label')
+                );
+            button.click(function () {
+                const index = that.notebook.find_cell_index(that)
+                that.notebook.insert_cell_below(btns[i].cell_type, index);
+                that.notebook.select(index + 1, true);
+                that.notebook.focus_cell();
+            })
+            btn_group.append(button)
+        }
+        const bottom_hover_bars = $('<div></div>')
+            .addClass('cell-empty-hover cell-insert-bar')
+            .append(btn_group)
+
+        cell.append(bottom_hover_bars);
         this.element = cell;
         this.inner_cell = inner_cell;
     };
@@ -132,9 +219,6 @@ define([
     TextCell.prototype.select = function () {
         var cont = Cell.prototype.select.apply(this, arguments);
         if (cont) {
-            if (this.mode === 'edit') {
-                this.code_mirror.refresh();
-            }
         }
         return cont;
     };
@@ -161,7 +245,7 @@ define([
      * @return {string} CodeMirror current text value
      */
     TextCell.prototype.get_text = function() {
-        return this.code_mirror.getValue();
+        return this.markdown_editor.value;
     };
 
     /**
@@ -170,9 +254,8 @@ define([
      * @method set_text
      * */
     TextCell.prototype.set_text = function(text) {
-        this.code_mirror.setValue(text);
+        this.markdown_editor.value = text;
         this.unrender();
-        this.code_mirror.refresh();
     };
 
     /**
@@ -207,7 +290,7 @@ define([
                 this.set_text(data.source);
                 // make this value the starting point, so that we can only undo
                 // to this state, instead of a blank cell
-                this.code_mirror.clearHistory();
+                // this.code_mirror.clearHistory();
                 // TODO: This HTML needs to be treated as potentially dangerous
                 // user input and should be handled before set_rendered.
                 this.set_rendered(data.rendered || '');
@@ -290,12 +373,12 @@ define([
         var config_default = utils.mergeopt(TextCell, MarkdownCell.options_default);
         this.class_config = new configmod.ConfigWithDefaults(options.config,
                                             config_default, 'MarkdownCell');
-        TextCell.apply(this, [$.extend({}, options, {config: options.config})]);
-
         this.cell_type = 'markdown';
 
         // Used to keep track of drag events
         this.drag_counter = 0;
+
+        TextCell.apply(this, [$.extend({}, options, {config: options.config})]);
     };
 
     MarkdownCell.options_default = {
@@ -391,8 +474,13 @@ define([
             var text_and_math = mathjaxutils.remove_math(text);
             text = text_and_math[0];
             math = text_and_math[1];
-            // Prevent marked from returning inline styles for table cells
+
+            // 使标题解析 # 号可以无空格
+            marked.Lexer.rules.gfm.heading = marked.Lexer.rules.heading;
+            marked.Lexer.rules.tables.heading = marked.Lexer.rules.heading;
+
             var renderer = new marked.Renderer();
+            // Prevent marked from returning inline styles for table cells
             renderer.tablecell = function (content, flags) {
               var type = flags.header ? 'th' : 'td';
               var style = flags.align == null ? '': ' style="text-align: ' + flags.align + '"';
@@ -400,7 +488,11 @@ define([
               var end_tag = '</' + type + '>\n';
               return start_tag + content + end_tag;
             };
-            marked(text, { renderer: renderer }, function (err, html) {
+            marked(text, { renderer: renderer, gfm: true, tables: true, breaks: true, pedantic: false,
+                sanitize: false,
+                smartLists: true,
+                smartypants: false,
+                mangle: false }, function (err, html) {
                 html = mathjaxutils.replace_math(html, math);
                 html = $(security.sanitize_html_and_parse(html));
                 // add anchors to headings
@@ -448,84 +540,8 @@ define([
         var that = this;
 
         this.element.dblclick(function () {
-            var cont = that.unrender();
-            if (cont) {
-                that.focus_editor();
-            }
-        });
-
-        var attachment_regex = /^image\/.*$/;
-
-        // Event handlers to allow users to insert image using either
-        // drag'n'drop or copy/paste
-        var div = that.code_mirror.getWrapperElement();
-        $(div).on('paste', function(evt) {
-            var data = evt.originalEvent.clipboardData;
-            var items = data.items;
-            if (data.items !== undefined) {
-                for (var i = 0; i < items.length; ++i) {
-                    var item = items[i];
-                    if (item.kind == 'file' && attachment_regex.test(item.type)) {
-                        // TODO(julienr): This does not stop code_mirror from pasting
-                        // the filename.
-                        evt.stopPropagation();
-                        evt.preventDefault();
-                        that.insert_inline_image_from_blob(item.getAsFile());
-                    }
-                }
-            }
-        });
-
-        // Allow drag event if the dragged file can be used as an attachment
-        // If we use this.code_mirror.on to register a "dragover" handler, we
-        // get an empty dataTransfer
-        this.code_mirror.on("dragover", function(cm, evt) {
-            if (utils.dnd_contain_file(evt)) {
-                evt.preventDefault();
-            }
-        });
-
-        // We want to display a visual indicator that the drop is possible.
-        // The dragleave event is fired when we hover a child element (which
-        // is often immediately after we got the dragenter), so we keep track
-        // of the number of dragenter/dragleave we got, as discussed here :
-        // https://stackoverflow.com/q/7110353/116067
-        // This doesn't seem to be 100% reliable, so we clear the dropzone
-        // class when the cell is rendered as well
-        this.code_mirror.on("dragenter", function(cm, evt) {
-            if (utils.dnd_contain_file(evt)) {
-                that.drag_counter++;
-                that.inner_cell.addClass('dropzone');
-            }
-            evt.preventDefault();
-            evt.stopPropagation();
-        });
-
-        this.code_mirror.on("dragleave", function(cm, evt) {
-            that.drag_counter--;
-            if (that.drag_counter <= 0) {
-                that.inner_cell.removeClass('dropzone');
-            }
-            evt.preventDefault();
-            evt.stopPropagation();
-        });
-
-        this.code_mirror.on("drop", function(cm, evt) {
-            that.drag_counter = 0;
-            that.inner_cell.removeClass('dropzone');
-
-            var files = evt.dataTransfer.files;
-            for (var i = 0; i < files.length; ++i) {
-                var file = files[i];
-                if (attachment_regex.test(file.type)) {
-                    // Prevent the default code_mirror 'drop' event handler
-                    // (which inserts the file content) if this is a
-                    // recognized media file
-                    evt.stopPropagation();
-                    evt.preventDefault();
-                    that.insert_inline_image_from_blob(file);
-                }
-            }
+            that.unrender();
+            that.markdown_editor.focus()
         });
     };
 

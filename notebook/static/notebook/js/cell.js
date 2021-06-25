@@ -18,7 +18,8 @@ define([
     'codemirror/addon/edit/closebrackets',
     'codemirror/addon/comment/comment',
     'services/config',
-], function($, utils, i18n, CodeMirror, cm_match, cm_closeb, cm_comment, configmod) {
+    'notebook/js/celltoolbar',
+], function($, utils, i18n, CodeMirror, cm_match, cm_closeb, cm_comment, configmod, celltoolbar) {
     "use strict";
     
     var overlayHack = CodeMirror.scrollbarModel.native.prototype.overlayHack;
@@ -121,6 +122,8 @@ define([
             this.bind_events();
             this.init_classes();
         }
+
+        celltoolbar.CellToolbar
     };
 
     Cell.options_default = {
@@ -500,6 +503,7 @@ define([
             delete data.metadata.collapsed;
         }
         data.cell_type = this.cell_type;
+        data.id = this.cell_id
         return data;
     };
 
@@ -508,6 +512,9 @@ define([
      * @method fromJSON
      **/
     Cell.prototype.fromJSON = function (data) {
+        if (data.id) {
+            this.cell_id = data.id
+        }
         if (data.metadata !== undefined) {
             this.metadata = data.metadata;
         }

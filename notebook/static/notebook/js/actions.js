@@ -17,7 +17,8 @@
 
 define([
     'base/js/i18n',
-    ], function(i18n){
+    'base/js/utils',
+    ], function(i18n, utils){
     "use strict";
 
     var warn_bad_name = function(name){
@@ -158,6 +159,7 @@ define([
         },
         'run-cell':{
             cmd: i18n.msg._('run selected cells'),
+            icon: 'icon-play-6',
             help    : i18n.msg._('run selected cells'),
             help_index : 'bb',
             handler : function (env) {
@@ -173,6 +175,7 @@ define([
             }
         },
         'run-all-cells': {
+            icon: 'fa-forward',
             cmd: i18n.msg._('run all cells'),
             help: i18n.msg._('run all cells'),
             help_index: 'bd',
@@ -301,7 +304,7 @@ define([
         'cut-cell' : {
             cmd: i18n.msg._('cut selected cells'),
             help: i18n.msg._('cut selected cells'),
-            icon: 'fa-cut',
+            icon: 'icon-cut',
             help_index : 'ee',
             handler : function (env) {
                 var index = env.notebook.get_selected_index();
@@ -312,7 +315,7 @@ define([
         'copy-cell' : {
             cmd: i18n.msg._('copy selected cells'),
             help: i18n.msg._('copy selected cells'),
-            icon: 'fa-copy',
+            icon: 'icon-copy',
             help_index : 'ef',
             handler : function (env) {
                 env.notebook.copy_cell();
@@ -335,7 +338,7 @@ define([
         'paste-cell-below' : {
             cmd: i18n.msg._('paste cells below'),
             help: i18n.msg._('paste cells below'),
-            icon: 'fa-paste',
+            icon: 'icon-paste',
             help_index : 'eh',
             handler : function (env) {
                 env.notebook.paste_cell_below();
@@ -358,6 +361,29 @@ define([
             help_index : 'ed',
             handler : function (env) {
                 env.notebook.insert_cell_below();
+                env.notebook.select_next(true);
+                env.notebook.focus_cell();
+            }
+        },
+        'insert-cell-code' : {
+            cmd: i18n.msg._('change cell to code'),
+            help    : i18n.msg._('change cell to code'),
+            help_index : 'ca',
+            icon : 'icon-add-9',
+            handler : function (env) {
+                env.notebook.insert_cell_below();
+                env.notebook.select_next(true);
+                env.notebook.focus_cell();
+                env.notebook.cells_to_code();
+            }
+        },
+        'insert-cell-markdown' : {
+            cmd: i18n.msg._('change cell to markdown'),
+            help    : i18n.msg._('change cell to markdown'),
+            help_index : 'cb',
+            icon : 'icon-add-9',
+            handler : function (env) {
+                env.notebook.insert_cell_below('markdown');
                 env.notebook.select_next(true);
                 env.notebook.focus_cell();
             }
@@ -460,7 +486,7 @@ define([
         'move-cell-down' : {
             cmd: i18n.msg._('move cells down'),
             help: i18n.msg._('move selected cells down'),
-            icon: 'fa-arrow-down',
+            icon: 'icon-down-7',
             help_index : 'eb',
             handler : function (env) {
                 env.notebook.move_cell_down();
@@ -469,7 +495,7 @@ define([
         'move-cell-up' : {
             cmd: i18n.msg._('move cells up'),
             help: i18n.msg._('move selected cells up'),
-            icon: 'fa-arrow-up',
+            icon: 'icon-up-7',
             help_index : 'ea',
             handler : function (env) {
                 env.notebook.move_cell_up();
@@ -494,6 +520,7 @@ define([
         'delete-cell': {
             cmd: i18n.msg._('delete cells'),
             help: i18n.msg._('delete selected cells'),
+            icon: 'icon-icon-delet-2',
             help_index : 'ej',
             handler : function (env) {
                 env.notebook.delete_cell();
@@ -701,6 +728,87 @@ define([
             handler : function(env) {
                 env.notebook.close_and_halt();
             }
+        },
+        'set-readony': {
+            cmd: i18n.msg._('set readonly'),
+            help : i18n.msg._('set readonly'),
+            icon: 'icon-eye-5',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'show-more-actions': {
+            cmd: i18n.msg._('show more actions'),
+            help : i18n.msg._('show more actions'),
+            icon: 'icon-more-2',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'goto-previous-step': {
+            cmd: i18n.msg._('goto previous step'),
+            help : i18n.msg._('goto previous step'),
+            icon: 'icon-undo-line',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'goto-next-step': {
+            cmd: i18n.msg._('goto next step'),
+            help : i18n.msg._('goto next step'),
+            icon: 'icon-redo-line',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'show-all-run-time': {
+            cmd: i18n.msg._('show all run time'),
+            help : i18n.msg._('show all run time'),
+            icon: 'icon-display-time-consuming',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'hide-all-run-time': {
+            cmd: i18n.msg._('hide all run time'),
+            help : i18n.msg._('hide all run time'),
+            icon: 'icon-hide-time-consuming',
+            handler : function(env) {
+                // env.notebook.close_and_halt();
+            }
+        },
+        'version-management': {
+            cmd: i18n.msg._('View version management'),
+            help : i18n.msg._('View version management'),
+            icon: 'icon-multi-version',
+            handler : function(env) {
+                env.notebook.save_checkpoint().then(
+                    function () {
+                        env.notebook.note_history()
+                    },
+                    function (e) {
+                        var res = {
+                            result: false,
+                            message: e.xhr.statusText
+                        }
+                        utils.post_message({
+                            eventType: 'noteVersionManagement',
+                            res: res,
+                            isShow: true
+                        })
+                    }
+                )
+            }
+        },
+        'notebook-report': {
+            cmd: i18n.msg._('Generate notebook report'),
+            help : i18n.msg._('Generate notebook report'),
+            icon: 'icon-generate-report',
+            handler : function(env) {
+                utils.post_message({
+                    eventType: 'notebookReport'
+                });
+            }
         }
     };
 
@@ -849,15 +957,36 @@ define([
                 env.notebook.clear_all_output();
             }
         },
+        'upload-file': {
+            cmd: '上传文件',
+            help: '上传文件',
+            icon: 'icon-upload-cloud',
+            handler: function (env) {
+                console.log('show upload file')
+                utils.post_message({
+                    eventType: 'uploadFileShow',
+                })
+            }
+        },
         'save-notebook':{
             cmd: i18n.msg._('save notebook'),
             help: i18n.msg._("Save and Checkpoint"),
             help_index : 'fb',
-            icon: 'fa-save',
+            icon: 'icon-save-line-2',
             handler : function (env, event) {
-                env.notebook.save_checkpoint();
+                if (event && event.type === 'keydown') {
+                    env.notebook.send_save_tips = true
+                    env.notebook.save_checkpoint()
+                    event.preventDefault()
+                    return false
+                }
+                window.parent.postMessage({
+                    isShow: true,
+                    eventType: 'saveNoteConfirm',
+                    notebook_id: window.__notebook_id__
+                }, '*')
                 if(event){
-                    event.preventDefault();
+                    event.preventDefault()
                 }
                 return false;
             }

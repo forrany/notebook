@@ -161,20 +161,11 @@ define([
             // trying to reconnect and we don't want to spam the user
             // with messages
             if (info.attempt === 1) {
-
-                var msg = i18n.msg._("A connection to the notebook server could not be established." +
-                        " The notebook will continue trying to reconnect. Check your" +
-                        " network connection or notebook server configuration.");
-
-                var the_dialog = dialog.kernel_modal({
-                    title: i18n.msg._("Connection failed"),
-                    body: msg,
-                    keyboard_manager: that.keyboard_manager,
-                    notebook: that.notebook,
-                    buttons : {
-                        "OK": {}
-                    }
-                });
+                
+                /** 通知父级连接断开 */
+                window.parent.postMessage({
+                    eventType: 'connectionFailed'
+                }, '*')
 
                 // hide the dialog on reconnect if it's still visible
                 var dismiss = function () {

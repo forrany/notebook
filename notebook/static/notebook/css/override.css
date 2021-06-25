@@ -5,3 +5,9 @@ a hack to deal with our current css styles and no new styling should be added in
 #ipython-main-app {
     position: relative;
 }
+
+#cmd_palette,
+#notebook_name,
+#to_code {
+    display: none;
+}

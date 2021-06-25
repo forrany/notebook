@@ -16,23 +16,74 @@
 div.cell {
     .vbox();
     .corner-all();
-    .border-box-sizing();
+    .border-box-sizing();    
     
     border-width: @cell_border_width;
     border-style: solid;
     border-color: transparent;
+    border-left: 0;
+    border-right: 0;
 
     width: 100%;
-    padding: @_cell_padding_minus_border;
+    padding: 12px 16px;
     /* This acts as a spacer between cells, that is outside the border */
     margin: 0px;
-    outline: none;
+    margin-bottom: 24px;
+    outline: none;    
     
     position: relative;
     overflow: visible;
 
+    .cell-empty-hover {
+        position: absolute;
+        height: 24px;
+        top: 100%!important;
+        left: 0;
+        right: 0;
+        line-height: 24px;
+        padding: 2px 0 2px 15ex;
+        .btn-group {
+            display: none;
+            vertical-align: unset;
+            .btn {
+                display: flex;
+                align-items: center;
+                min-width: 14px;
+                padding: 0;
+                margin: 0 10px;
+                border: 0;
+                font-size: 14px;
+                color: #979BA5;
+                i {
+                    font-size: 12px;
+                }
+                &:hover {
+                    background-color: transparent;
+                    color: #3A84FF;
+                }
+            }
+        }
+    }
+
     &:before {
         ._selected_style(transparent);
+    }
+
+    &:hover {
+        border-color: #F0F1F5;
+
+        .cell-empty-hover > .btn-group {
+            display: inline-block;
+        }
+        
+        &:before {
+            ._selected_style(@selected_border_color);
+            background-color: #C4ECF5;
+        }
+
+        @media print {
+            border-color: transparent;
+        }
     }
 
     &.jupyter-soft-selected {
@@ -49,7 +100,7 @@ div.cell {
     }
 
     &.selected, &.selected.jupyter-soft-selected {
-        border-color: @border_color;
+        border-color: #F0F1F5;
         
         &:before {
             ._selected_style(@selected_border_color);
@@ -61,7 +112,8 @@ div.cell {
     }
 
     .edit_mode &.selected {
-        border-color: @edit_mode_border_color;
+        border-color: transparent;
+        box-shadow: 0px 0px 6px 0px rgba(87, 87, 87, 0.2);
         
         &:before {
             ._selected_style(@edit_mode_border_color);
@@ -72,6 +124,45 @@ div.cell {
         }
     }
 
+    .toolbar {
+        display: none;
+        position: absolute;
+        height: 24px;
+        line-height: 22px;
+        padding: 0 2px;
+        .btn-group {
+            font-size: 0;
+            margin: 0;
+            .btn {
+                min-width: 22px;
+                height: 22px;
+                line-height: 14px;
+                padding: 0;
+                margin: 0;
+                border-radius: 0 !important;
+                font-size: 16px;
+                color: #989CA6;
+                &:hover {
+                    background-color: #E1ECFF;
+                    color: #3A84FF;
+                }
+            }
+        }
+    }
+
+    &.selected {
+        .toolbar {
+            display: flex;
+            right: 16px;
+            top: 1px;
+            background: #FFFFFF;
+            border: 1px solid #DCDEE5;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            transform: translateY(-50%);
+        }
+    }
 }
 
 
@@ -80,7 +171,7 @@ div.cell {
     min-width: 14ex;
 
     /* This padding is tuned to match the padding on the CodeMirror editor. */
-    padding: @code_padding;
+    padding: 11px @code_padding;
     margin: 0px;
     font-family: @font-family-monospace;
     text-align: right;
@@ -116,9 +207,9 @@ div.inner_cell {
 
 /* input_area and input_prompt must match in top border and margin for alignment */
 div.input_area {
-    border: 1px solid @light_border_color;
+    border: 1px solid #E6E7EB;
     .corner-all;
-    background: @cell_background;
+    background: #FAFBFD;
     line-height: @code_line_height;
 }
 

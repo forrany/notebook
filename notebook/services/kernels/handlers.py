@@ -9,6 +9,7 @@ Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-
 import json
 import logging
 from textwrap import dedent
+from time import sleep
 
 from tornado import gen, web
 from tornado.concurrent import Future
@@ -17,6 +18,16 @@ from tornado.ioloop import IOLoop
 from jupyter_client import protocol_version as client_protocol_version
 from jupyter_client.jsonutil import date_default
 from ipython_genutils.py3compat import cast_unicode
+
+from notebook.services.constants import (
+    RUNNING,
+    MLSQL_ERR_CODE,
+    STOP_MODELING_TIMES,
+    STOP_MODELING_WAIT_TIME,
+    GET_STOP_STATUS_WAIT_TIME,
+    FORBIDDEN_CODES,
+)
+from notebook.services.pizza_api import get_mlsql_info, get_mlsql_task_info, stop_modeling, get_mlsql_status
 from notebook.utils import maybe_future, url_path_join, url_escape
 
 from ...base.handlers import APIHandler
@@ -75,6 +86,8 @@ class KernelActionHandler(APIHandler):
     def post(self, kernel_id, action):
         km = self.kernel_manager
         if action == 'interrupt':
+            self.log.info("start_interrupt|kernel_id: %s" % kernel_id)
+            self.stop_mlsql_task(kernel_id)
             km.interrupt_kernel(kernel_id)
             self.set_status(204)
         if action == 'restart':
@@ -88,6 +101,34 @@ class KernelActionHandler(APIHandler):
                 model = yield maybe_future(km.kernel_model(kernel_id))
                 self.write(json.dumps(model, default=date_default))
         self.finish()
+
+    def stop_mlsql_task(self, kernel_id):
+        mlsql_info_status, mlsql_info_result = get_mlsql_info(kernel_id)
+        self.log.info("get_mlsql_info: %s" % mlsql_info_result)
+        if not (mlsql_info_status and mlsql_info_result['data']):
+            return
+
+        notebook_id = mlsql_info_result['data'][0].get('notebook_id')
+        task_info_status, task_info_result = get_mlsql_task_info(notebook_id)
+        self.log.info("get_mlsql_task_info: %s" % task_info_result)
+        if not (task_info_status and task_info_result['data']):
+            return
+
+        task_id, status = task_info_result['data']['task_id'], task_info_result['data']['status']
+        if status == RUNNING:
+            for i in range(STOP_MODELING_TIMES):
+                stop_status, stop_result = stop_modeling(task_id)
+                self.log.info("stop_modeling: %s" % stop_result)
+                if not (stop_status and stop_result['code'] == MLSQL_ERR_CODE):
+                    break
+                sleep(STOP_MODELING_WAIT_TIME)
+
+        while True:
+            sleep(GET_STOP_STATUS_WAIT_TIME)
+            mlsql_status, mlsql_result = get_mlsql_status(task_id)
+            self.log.info("stop_status_result: %s" % mlsql_result)
+            if mlsql_status and mlsql_result['data'] != RUNNING:
+                break
 
 
 class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
@@ -289,6 +330,16 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
             stream.on_recv_stream(self._on_zmq_reply)
 
     def on_message(self, msg):
+
+        def check_content_security():
+            """
+            校验代码安全性
+            """
+            for forbidden_code in FORBIDDEN_CODES:
+                if forbidden_code in msg['content']['code']:
+                    msg['content']['code'] = "print(\"The code contains '%s' is not allowed to execute\")" % forbidden_code
+                    break
+
         if not self.channels:
             # already closed, ignore the message
             self.log.debug("Received message on closed websocket %r", msg)
@@ -309,6 +360,8 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if am and mt not in am:
             self.log.warning('Received message of type "%s", which is not allowed. Ignoring.' % mt)
         else:
+            if 'code' in msg['content']:
+                check_content_security()
             stream = self.channels[channel]
             self.session.send(stream, msg)
 

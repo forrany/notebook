@@ -185,6 +185,58 @@ define(function(requirejs) {
         var url = this.api_url(path);
         return utils.promising_ajax(url, settings);
     };
+
+    Contents.prototype.submit_notebook = function(path, model) {
+        var settings = {
+            processData : false,
+            type : "POST",
+            dataType: "json",
+            data : JSON.stringify(model),
+            contentType: 'application/json'
+        };
+        var url = this.api_url(path + '/version');
+        return utils.promising_ajax(url, settings);
+    };
+
+    Contents.prototype.get_notebook_diff = function(path, model) {
+        var settings = {
+            type : "GET",
+            data: { commit_id: model.commit_id}
+        };
+        var url = this.api_url(path + '/version/diff');
+        return utils.promising_ajax(url, settings);
+    };
+
+    Contents.prototype.get_notebook_history = function(path) {
+        var settings = {
+            processData : false,
+            type : "GET",
+            dataType: "json"
+        };
+        var url = this.api_url(path + '/version');
+        return utils.promising_ajax(url, settings);
+    };
+
+    Contents.prototype.rollback_notebook = function(path, model) {
+        var settings = {
+            processData : false,
+            type : "PUT",
+            dataType: "json",
+            data : JSON.stringify(model),
+            contentType: 'application/json'
+        };
+        var url = this.api_url(path + '/version/reset');
+        return utils.promising_ajax(url, settings);
+    };
+
+    Contents.prototype.note_delete_history = function(path, params) {
+        var settings = {
+            type : "DELETE"
+        };
+        var url = this.api_url(path + '/version');
+        url += `?commit_id=${params.commit_id}`
+        return utils.promising_ajax(url, settings);
+    };
     
     Contents.prototype.copy = function(from_file, to_dir) {
         /**

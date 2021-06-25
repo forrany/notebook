@@ -29,6 +29,7 @@ var rjs_config = {
     typeahead: 'components/jquery-typeahead/dist/jquery.typeahead',
     contents: 'empty:',
     custom: 'empty:',
+    jqueryLoading: 'components/gasparesganga-jquery-loading-overlay/dist/loadingoverlay.min'
   },
   map: { // for backward compatibility
     "*": {
@@ -59,6 +60,10 @@ var rjs_config = {
       deps: ["jquery"],
       exports: "$"
     },
+    "jqueryLoading": {
+      deps: ["jquery"],
+      exports: "$"
+    }
   },
 
   exclude: [

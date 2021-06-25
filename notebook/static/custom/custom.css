@@ -6,3 +6,35 @@ mainly to be overridden in profile/static/custom/custom.css
 This will always be an empty file
 */
 
+[class^='icon-'],
+[class*=' icon-'] {
+    /* use !important to prevent issues with browser extensions that change fonts */
+    font-family: 'bkdata' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    text-align: center;
+    /* Better Font Rendering =========== */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    width: 100% !important;
+}
+
+button, a {
+    outline: none !important;
+}
+
+button:active, button.active {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+button:focus {
+    background-color: transparent !important;
+}

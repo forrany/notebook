@@ -93,7 +93,9 @@ class NotebookHandler(IPythonHandler):
             kill_kernel=False,
             mathjax_url=self.mathjax_url,
             mathjax_config=self.mathjax_config,
-            get_frontend_exporters=get_frontend_exporters
+            get_frontend_exporters=get_frontend_exporters,
+            bk_doc_url=os.environ.get('BK_DOC_URL'),
+            bk_run_version=os.environ.get('BK_RUN_VERSION'),
             )
         )
 

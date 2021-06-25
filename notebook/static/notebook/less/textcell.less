@@ -81,3 +81,30 @@ h1,h2,h3,h4,h5,h6 {
     font-size: 100%;
     font-style: italic;
 }
+
+div.run_this_cell {
+    display: none;
+    cursor: pointer;
+    color: #333;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    width: 1ex;
+    font-size: 24px;
+    color: #3A84FF;
+}
+
+div.text_cell {
+    &.selected {
+        .prompt_container {
+            position: relative;
+            div.run_this_cell {
+                display: inline-block;
+                position: absolute;
+                background: #fff;
+                width: 100%;
+            }
+        }
+    }
+}

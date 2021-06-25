@@ -28,6 +28,7 @@ define([
      */
     var Session = function (options) {
         this.id = null;
+        this.username = options.username
         this.notebook_model = {
             path: options.notebook_path
         };
@@ -39,6 +40,7 @@ define([
         this.base_url = options.base_url;
         this.ws_url = options.ws_url;
         this.session_service_url = utils.url_path_join(this.base_url, 'api/sessions');
+        this.bk_infor_url = utils.url_path_join(this.base_url, 'api/blueking')
         this.session_url = null;
 
         this.notebook = options.notebook;
@@ -104,9 +106,10 @@ define([
         var on_success = function (data, status, xhr) {
             if (that.kernel) {
                 that.kernel.name = that.kernel_model.name;
+                that.kernel.username = that.username
             } else {
                 var kernel_service_url = utils.url_path_join(that.base_url, "api/kernels");
-                that.kernel = new kernel.Kernel(kernel_service_url, that.ws_url, that.kernel_model.name);
+                that.kernel = new kernel.Kernel(kernel_service_url, that.ws_url, that.kernel_model.name, that.username);
             }
             that.events.trigger('kernel_created.Session', {session: that, kernel: that.kernel});
             that.kernel._kernel_created(data.kernel);
@@ -130,6 +133,29 @@ define([
             dataType: "json",
             success: this._on_success(on_success),
             error: this._on_error(on_error)
+        });
+    };
+
+    /**
+     * POST /api/sessions/
+     * 
+     * 发送数据平台的相关信息
+     * 
+     * @function send_bk_infor
+     * @param {function} [Object] -待发送的数据
+     * @param {function} [success] - function executed on ajax success
+     * @param {function} [error] - function executed on ajax error
+     */
+    Session.prototype.send_bk_infor = function (data, success, error) {
+        utils.ajax(this.bk_infor_url, {
+            processData: false,
+            cache: false,
+            type: "POST",
+            contentType: 'application/json',
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: this._on_success(success),
+            error: this._on_error(error)
         });
     };
 
@@ -227,6 +253,9 @@ define([
             }
             if (options && options.kernel_name) {
                 that.kernel_model.name = options.kernel_name;
+            }
+            if (options && options.username) {
+                that.username = options.username;
             }
             that.kernel_model.id = null;
             that.start(success, error);

@@ -1183,7 +1183,42 @@ define([
         document.head.appendChild(link);
     };
 
+    var post_message = function (res) {
+        const params = Object.assign({}, res, { notebook_id: window.__notebook_id__})
+        window.parent.postMessage(params, '*')
+    }
+
+    var generate_stage_html = function (toinsert, data) {
+        var iconMap = {
+            success: 'icon-check-line',
+            running: 'icon-running'
+        }
+
+        var count = data.length;
+        var children = [];
+        for(let i = 0; i < count; i++) {
+            var stage_item = $(`<div class="stage_item"></div>`)
+            var item_content = `<span class="${iconMap[data[i].stage_status]} icon"></span
+            ><span class="stage_description">${data[i].description}</span
+            ><span class="stage_time">${data[i].time_taken}s`
+            stage_item.html(item_content)
+            children.push(stage_item)
+        }
+
+        toinsert.append(children);
+        return toinsert
+    }
+
+    var doc_address = {
+        ieod: {
+            mlsql: 'tencent/zh/user-guide/datalab/notebook/mlsql/mlsql.html',
+            model: 'tencent/zh/user-guide/dataflow/components/modeling/mlsql_apply.html',
+            help: 'tencent/zh/user-guide/datalab/notebook/concepts.html'
+        }
+    }
+
     var utils = {
+        doc_address: doc_address,
         throttle: throttle,
         is_loaded: is_loaded,
         load_extension: load_extension,
@@ -1236,7 +1271,9 @@ define([
         js_idx_to_char_idx: js_idx_to_char_idx,
         char_idx_to_js_idx: char_idx_to_js_idx,
         _ansispan:_ansispan,
-        change_favicon: change_favicon
+        change_favicon: change_favicon,
+        post_message: post_message,
+        generate_stage_html: generate_stage_html
     };
 
     return utils;

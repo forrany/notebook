@@ -659,6 +659,42 @@ msgstr "保存代码"
 msgid "Save and Checkpoint"
 msgstr "保存并检查"
 
+#: notebook/static/notebook/js/notebook.js:3384
+msgid "Submit notebook"
+msgstr "提交笔记本"
+
+#: notebook/static/notebook/js/notebook.js:3375
+msgid "Please enter Commit message"
+msgstr "请填写提交信息"
+
+#: notebook/static/notebook/js/notebook.js:3408
+msgid "Submitted successfully"
+msgstr "提交成功"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Submission Failed"
+msgstr "提交失败"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Version management"
+msgstr "版本管理"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Document submission"
+msgstr "文档提交"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Difference comparison"
+msgstr "差异对比"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Commit history"
+msgstr "提交历史"
+
+#: notebook/static/notebook/js/notebook.js:3412
+msgid "Version rollback"
+msgstr "版本回退"
+
 #: notebook/static/notebook/js/cell.js:79
 msgid "Warning: accessing Cell.cm_config directly is deprecated."
 msgstr "警告: 访问Cell.cm_config已经被弃用了."
@@ -922,6 +958,10 @@ msgstr "Notebook 失效"
 #: notebook/static/notebook/js/notebook.js:2801
 msgid "The save operation succeeded, but the notebook does not appear to be valid. The validation error was:"
 msgstr "保存操作成功了, 但是这个笔记本看起来并不有效. 验证错误:"
+
+#: notebook/static/notebook/js/notebook.js:2801
+msgid "The save operation failed. The validation error was:"
+msgstr "保存操作失败，验证错误:"
 
 #: notebook/static/notebook/js/notebook.js:2852
 msgid "A trusted Jupyter notebook may execute hidden malicious code when you open it. Selecting trust will immediately reload this notebook in a trusted state. For more information, see the Jupyter security documentation: "
@@ -1519,6 +1559,31 @@ msgstr "没有检查点"
 #, python-format
 msgid "Last Checkpoint: %s"
 msgstr "最后检查: %s "
+
+#: notebook/static/notebook/js/savewidget.js:193
+#, python-format
+msgid "Last Save Time: %s"
+msgstr "上次保存时间: %s "
+
+#: notebook/static/notebook/js/savewidget.js:193
+#, python-format
+msgid "View version management"
+msgstr "查看版本管理"
+
+#: notebook/static/notebook/js/savewidget.js:193
+#, python-format
+msgid "Generate notebook report"
+msgstr "生成报告"
+
+#: notebook/static/notebook/js/savewidget.js:193
+#, python-format
+msgid "Current version"
+msgstr "当前版本"
+
+#: notebook/static/notebook/js/savewidget.js:193
+#, python-format
+msgid "Automatically save to this version every minute"
+msgstr "每分钟自动保存至该版本"
 
 #: notebook/static/notebook/js/savewidget.js:217
 msgid "(unsaved changes)"

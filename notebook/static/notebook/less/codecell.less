@@ -31,7 +31,7 @@ div.prompt_container {
 
 /* input_area and input_prompt must match in top border and margin for alignment */
 div.input_prompt {
-    color: @input_prompt_color;
+    color: #979BA5;
     border-top: 1px solid transparent;
 }
 
@@ -39,11 +39,57 @@ div.run_this_cell {
     display: none;
     cursor: pointer;
     color: #333;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding-left: 2ex;
-    padding-right: 2ex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
     width: 1ex;
+    font-size: 24px;
+    color: #3A84FF;
+}
+
+div.stop_this_cell {
+    display: none;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    width: 1ex;
+    .stop-btn {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background-color: #3A84FF;
+        margin: 4px;
+        cursor: pointer;
+    }
+    .running-time {
+        display: block;
+        font-size: 12px;
+        color: #979BA5;
+    }
+}
+
+div.code_cell {
+    &.selected {
+        .prompt_container {
+            position: relative;
+            div.run_this_cell {
+                display: inline-block;
+                position: absolute;
+                background: #fff;
+                width: 100%;
+            }
+        }
+        &.running {
+            div.stop_this_cell {
+                display: inline-block;
+                position: absolute;
+                background: #fff;
+                width: 100%;
+            }
+        }
+    }
 }
 
 // set the prompt width

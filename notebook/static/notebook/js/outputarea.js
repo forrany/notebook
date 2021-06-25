@@ -26,11 +26,13 @@ define([
         this.keyboard_manager = options.keyboard_manager;
         this.wrapper = $(options.selector);
         this.outputs = [];
+        this.publish_status_outputs = []
         this.collapsed = false;
         this.scrolled = false;
         this.scroll_state = 'auto';
         this.trusted = true;
         this.clear_queued = null;
+        this.cell_content = null;
         if (options.prompt_area === undefined) {
             this.prompt_area = true;
         } else {
@@ -123,8 +125,6 @@ define([
 
     OutputArea.prototype.bind_events = function () {
         var that = this;
-        this.prompt_overlay.dblclick(function () { that.toggle_output(); });
-        this.prompt_overlay.click(function () { that.toggle_scroll(); });
 
         this.element.on('resizeOutput', function () {
             // maybe scroll output,
@@ -315,6 +315,7 @@ define([
         }
 
         var record_output = true;
+        var record_status = false;
         switch(json.output_type) {
             case 'update_display_data':
                 record_output = false;
@@ -327,7 +328,11 @@ define([
                 break;
             case 'stream':
                 // append_stream might have merged the output with earlier stream output
-                record_output = this.append_stream(json);
+                if (json.text.includes('bk_status')) {
+                    record_status = this.append_publish_status(json);
+                } else {
+                    record_output = this.append_stream(json);
+                }
                 break;
             case 'error':
                 this.append_error(json);
@@ -348,9 +353,8 @@ define([
             this.handle_appended();
         }
 
-        if (record_output) {
-            this.outputs.push(json);
-        }
+        record_status && this.publish_status_outputs.push(json);
+        record_output && this.outputs.push(json);
 
         this.events.trigger('output_added.OutputArea', {
             output: json,
@@ -367,8 +371,9 @@ define([
         this.element.trigger('resizeOutput', {output_area: this});
     };
 
-    OutputArea.prototype.create_output_area = function () {
+    OutputArea.prototype.create_output_area = function (className) {
         var oa = $("<div/>").addClass("output_area");
+        className && oa.addClass(className)
         if (this.prompt_area) {
             oa.append($('<div/>').addClass('run_this_cell'));
             oa.append($('<div/>').addClass('prompt'));
@@ -487,7 +492,15 @@ define([
                     .empty()
                     .append(OutputArea.output_prompt_function(n));
         }
-        var inserted = this.append_mime_type(json, toinsert);
+        var inserted
+        if (json.data.hasOwnProperty('bk_chart')) {
+            const chartType = json.data.bk_chart
+            inserted = this.appendBkChartPanel(json, toinsert, chartType);
+            return
+        } else {
+            inserted = this.append_mime_type(json, toinsert);
+        }
+
         if (inserted) {
             inserted.addClass('output_result');
         }
@@ -500,6 +513,43 @@ define([
         }
     };
 
+    OutputArea.prototype.appendBkChartPanel = function(json, toinsert, type) {
+        const that = this
+        if (json.data.hasOwnProperty('list') && json.data.hasOwnProperty('select_fields_order')) {
+            var list = JSON.parse(json.data.list)
+            var select_fields_order = JSON.parse(json.data.select_fields_order)
+        } else {
+            var data = JSON.parse(json.data[MIME_TEXT].replace(/\n/g, '').replace(/\'/g, '"'))
+            var { list, select_fields_order } = data
+        }
+
+        var subarea = $('<div/>')
+            .addClass('output_subarea output_chart_panel');
+
+        toinsert.append(subarea);
+        this._safe_append(toinsert);
+
+        const containerWidth = parseInt(subarea.css('width'))
+        const chartOption = Object.assign({ width: (containerWidth - 320) * 0.88, height: 350 }, type === 'query_list'
+            ? { disabled: ['line', 'bar', 'pie', 'scatter'] }
+            : {})
+        
+        this.chartPanel = new window.BkChartsPanel(subarea.get(0),list, select_fields_order, {chart: chartOption})
+
+        const chartConfig = json.data.chart_config
+        chartConfig && this.chartPanel.updateOptions(JSON.parse(chartConfig))
+
+        this.chartPanel.on('option-changed', (newVal, oldVal, isLastConfig) => {
+            utils.post_message({
+                eventType: 'bk_perfume',
+                data: {
+                    chartConfig: chartConfig || {},
+                    changedValue: { newVal, oldVal, isLastConfig }
+                }
+            })
+        })
+
+    }
 
     OutputArea.prototype.append_error = function (json) {
         var tb = json.traceback;
@@ -519,6 +569,120 @@ define([
         }
     };
 
+    OutputArea.prototype.append_publish_status = function (json) {
+        let content;
+        try {
+            content = JSON.parse(json.text);
+        } catch(e) {
+            content = JSON.parse(json.text.split('↵')[0].replace(/\'/g, '"'));
+        }
+        const status = content.bk_status;
+        const can_release = content.bk_release && content.disable === false;
+        const evaluate = content.evaluate;
+        const subclass = "output_"+json.name;
+        var append_text = append_publish_status;
+        var first_flag = false;
+
+        var toinsert
+        if (this.publish_status_outputs.length > 0) {
+            // have at least one output to consider
+            var last = this.publish_status_outputs[this.publish_status_outputs.length-1];
+            if (last.output_type === 'stream' && json.name === last.name) {
+                // 找到status元素，并对其内容进行替换
+                toinsert = this.element.find('div.status_output_area');
+                first_flag = false;
+            }
+        } else {
+            toinsert = this.create_output_area('status_output_area');
+            first_flag = true;
+        }
+    
+        if (append_text) {
+            append_text.apply(this, [status, {}, toinsert]).addClass("output_stream " + subclass);
+            can_release && this.append_publish_area();
+            evaluate && this.append_evalute_card(evaluate);
+            content.disable && this.append_publish_error(toinsert, content.disable_message);
+        }
+        first_flag && this._safe_append(toinsert);
+        return first_flag;
+
+    }
+
+    OutputArea.prototype.append_publish_error = function(toinsert, msg) {
+        var that = this;
+        var toinsert = this.create_output_area();
+
+        toinsert.find('div.prompt')
+            .addClass('release_prompt')
+            .empty()
+            .append($('<div class="model_release_button disabled">发布</div>'));
+
+        var errorArea = $('<div/>')
+        .addClass('output_subarea output_model_release error_message')
+        .append($(`<span class="icon-info"></span>`),
+        $(`<span>${msg}</span>`));
+
+        toinsert.append(errorArea);
+        that._safe_append(toinsert);
+
+    }
+    OutputArea.prototype.append_evalute_card = function(evaluete) {
+        var that = this;
+        var toinsert = this.create_output_area('mt-slim');
+        var subarea = $('<div/>')
+            .addClass('output_subarea output_model_evaluete_wrapper');
+        
+        if (evaluete.train) {
+            for(const value of Object.values(evaluete.train)) {
+                subarea.append(`<div class="evaluete-card">
+                    <h3 class="evaluete-title">${value.name}</h3>
+                    <p class="evaluete-value">${value.value.toFixed(2)}</p>
+                </div>`);
+            }
+        }
+
+        toinsert.append(subarea);
+        that._safe_append(toinsert);
+        
+    };
+
+    OutputArea.prototype.append_publish_area = function() {
+        var that = this;
+        var toinsert = this.create_output_area('mt-slim');
+        toinsert.find('div.prompt')
+                    .addClass('release_prompt')
+                    .empty()
+                    .append(this.release_prompt_function());
+
+        var subarea = $('<div/>')
+            .addClass('output_subarea output_model_release')
+            .append($(`<span class="icon-info"></span>`),
+            $(`<span>您可以继续在本页做<span class="model_prediction_text link"> 模型预测 </span>，或者将模型发布，发布后可以应用在<span class="dataflow_text link"> Dataflow </span>上</span>`));
+
+        subarea.find('.model_prediction_text').click(function () {
+            window.open(`${window.bk_doc_url}${utils.doc_address[window.bk_run_version].mlsql}`)
+        });
+        subarea.find('.dataflow_text').click(function () {
+            window.open(`${window.bk_doc_url}${utils.doc_address[window.bk_run_version].model}`)
+        });
+
+        toinsert.append(subarea);
+        that._safe_append(toinsert);
+
+    };
+
+    OutputArea.prototype.release_prompt_function = function() {
+        const that = this
+        const release_button = $('<div class="model_release_button">发布</div>');
+        release_button.click(function () {
+            utils.post_message({
+                eventType: 'releaseMLSQL',
+                cellContent: that.cell_content,
+                output: that.outputs
+            })
+        });
+        return release_button;
+    }
 
     OutputArea.prototype.append_stream = function (json) {
         var text = json.text;
@@ -783,6 +947,17 @@ define([
         return toinsert;
     };
 
+    var append_publish_status = function(data, md, element) {
+        var type = MIME_HTML;
+
+        var toinsert = element.find('div.output_publish_status').length ? $(element.find('div.output_publish_status')[0]) : this.create_output_subarea(md, "output_publish_status", type);
+        toinsert.empty()
+        // 将状态内容追加到页面
+        utils.generate_stage_html(toinsert, data)
+        element.append(toinsert)
+        return toinsert
+        
+    }
 
     var append_svg = function (svg_html, md, element) {
         var type = MIME_SVG;
@@ -1027,6 +1202,7 @@ define([
             this.element.trigger('cleared', {output_area: this});
             
             this.outputs = [];
+            this.publish_status_outputs = []
             this._display_id_targets = {};
             this.trusted = true;
             this.unscroll_area();
@@ -1063,12 +1239,24 @@ define([
     };
 
     /**
+     * 更新保存cell的内容
+     * @param {} content 
+     */
+    OutputArea.prototype.update_cell_content = function (content) {
+        this.cell_content = content
+    }
+
+    /**
      * Return for-saving version of outputs.
      * Excludes transient values.
      */
     OutputArea.prototype.toJSON = function () {
+        var that = this
         return this.outputs.map(function (out) {
             var out2 = {};
+            if (out.output_type === 'execute_result' && Object.keys(out.data).includes('bk_chart')) {
+                out.data.chart_config = JSON.stringify(that.chartPanel.getOptions())
+            }
             Object.keys(out).map(function (key) {
                 if (key != 'transient') {
                     out2[key] = out[key];

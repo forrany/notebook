@@ -11,6 +11,8 @@
 // MathJax disabled, set as null to distinguish from *missing* MathJax,
 // where it will be undefined, and should prompt a dialog later.
 window.mathjax_url = "{{mathjax_url}}";
+window.bk_doc_url = "{{bk_doc_url}}";
+window.bk_run_version = "{{bk_run_version}}"
 </script>
 
 <link rel="stylesheet" href="{{ static_url("components/bootstrap-tour/build/css/bootstrap-tour.min.css") }}" type="text/css" />
@@ -37,26 +39,20 @@ data-notebook-path="{{notebook_path | urlencode}}"
 
 {% block headercontainer %}
 
-
-<span id="save_widget" class="save_widget">
-    <span id="notebook_name" class="filename"></span>
-    <span class="checkpoint_status"></span>
-    <span class="autosave_status"></span>
-</span>
-
 {{super()}}
 
-<span id="kernel_logo_widget">
+<!-- <span id="kernel_logo_widget">
   {% block kernel_logo_widget %}
   <img class="current_kernel_logo" alt="Current Kernel Logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"/>
   {% endblock %}
-</span>
+</span> -->
 
 {% endblock headercontainer %}
 
 {% block header %}
 <div id="menubar-container" class="container">
-<div id="menubar">
+    <a class="document-url" href="{{bk_doc_url}}tencent/zh/user-guide/datalab/notebook/concepts.html" target="_blank">帮助文档</a>
+<div id="menubar" style="display: none;">
     <div id="menus" class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
             <button type="button" class="btn btn-default navbar-btn navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -332,7 +328,12 @@ data-notebook-path="{{notebook_path | urlencode}}"
 
 <div id="maintoolbar" class="navbar">
   <div class="toolbar-inner navbar-inner navbar-nobg">
-    <div id="maintoolbar-container" class="container"></div>
+    <div id="maintoolbar-container" class="container">
+        <span id="save_widget" class="save_widget">
+            <span id="notebook_name" class="filename"></span>
+            <span id="custom_autosave_info" class="custom_autosave_info"></span>
+        </span>
+    </div>
   </div>
 </div>
 </div>

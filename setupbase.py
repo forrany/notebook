@@ -128,6 +128,27 @@ def find_package_data():
     for app in ['auth', 'edit', 'notebook', 'terminal', 'tree']:
         static_data.append(pjoin('static', app, 'js', 'main.min.js'))
     
+    # install mditor for markdown cell use in textcell.js
+    md = pjoin("static", "mditor")
+    static_data.extend([
+        pjoin(md, "mditor.min.js"),
+        pjoin(md, "mditor.min.css"),
+    ])
+
+    # install chartPanel for markdown cell use in textcell.js
+    chart = pjoin("static", "chart")
+    static_data.extend([
+        pjoin(chart, "main.full.js"),
+        pjoin(chart, "main.full.css"),
+        pjoin(chart, "img", "*.svg")
+    ])
+
+    # install iconcool
+    icon = pjoin("static", "bk-icon-bkdata")
+    static_data.extend([
+        pjoin(icon, "index.css"),
+    ])
+
     components = pjoin("static", "components")
     # select the components we actually need to install
     # (there are lots of resources we bundle for sdist-reasons that we don't actually use)
@@ -161,6 +182,7 @@ def find_package_data():
         pjoin(components, "xterm.js-css", "index.css"),
         pjoin(components, "xterm.js-fit", "index.js"),
         pjoin(components, "text-encoding", "lib", "encoding.js"),
+        pjoin(components, "gasparesganga-jquery-loading-overlay", "dist", "loadingoverlay.min.js")
     ])
 
     # Ship all of Codemirror's CSS and JS

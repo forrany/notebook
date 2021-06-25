@@ -9,11 +9,12 @@
  * }
  */
 
-.CodeMirror {
+ .CodeMirror {
     line-height: @code_line_height;  /* Changed from 1em to our global default */
     font-size: @notebook_font_size;
     height: auto;     /* Changed to auto to autogrow */
     background: none;  /* Changed from white to allow our bg to show through */
+    color: #63656E;
 }
 
 .CodeMirror-scroll {
@@ -28,7 +29,7 @@
     /* we have set a different line-height and want this to scale with that. */
     /* Note that this should set vertical padding only, since CodeMirror assumes
        that horizontal padding will be set on CodeMirror pre */
-    padding: @code_padding 0;
+    padding: 12px 0 11px;
 }
 
 .CodeMirror-linenumber {
@@ -42,6 +43,8 @@
     // corner cuts into the rounded cell border.
     border-bottom-left-radius: @border-radius-base;
     border-top-left-radius: @border-radius-base;
+    background-color: #F0F2F5;
+    color: #979BA5;
 }
 
 .CodeMirror pre {

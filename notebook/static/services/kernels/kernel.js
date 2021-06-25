@@ -27,7 +27,7 @@ define([
      * @param {string} ws_url - the websockets URL
      * @param {string} name - the kernel type (e.g. python3)
      */
-    var Kernel = function (kernel_service_url, ws_url, name) {
+    var Kernel = function (kernel_service_url, ws_url, name, username) {
         this.events = events;
 
         this.id = null;
@@ -43,7 +43,7 @@ define([
             this.ws_url = location.protocol.replace('http', 'ws') + "//" + location.host;
         }
 
-        this.username = "username";
+        this.username = username;
         this.session_id = utils.uuid();
         this._msg_callbacks = {};
         this._msg_callbacks_overrides = {};
@@ -90,6 +90,10 @@ define([
             buffers : buffers || [],
             parent_header : {}
         };
+        if (content.cell_id) {
+            msg.header.cell_id = content.cell_id
+            delete content.cell_id
+        }
         return msg;
     };
 
@@ -458,7 +462,7 @@ define([
         var that = this;
         this.stop_channels();
         var ws_host_url = this.ws_url + this.kernel_url;
-
+        
         console.log("Starting WebSockets:", ws_host_url);
 
         this.ws = new this.WebSocket([
@@ -550,6 +554,10 @@ define([
                 error: error,
             });
         }
+
+        utils.post_message({
+            eventType: 'connectionFailed'
+        })
         this._schedule_reconnect();
     };
     

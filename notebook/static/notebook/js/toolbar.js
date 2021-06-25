@@ -13,6 +13,7 @@ define(['jquery','base/js/i18n'], function($, i18n) {
     var ToolBar = function (selector, options) {
         this.selector = selector;
         this.actions = (options||{}).actions;
+        this.container_class = options.className || 'toolbar';
         if (this.selector !== undefined) {
             this.element = $(selector);
             this.style();
@@ -95,6 +96,7 @@ define(['jquery','base/js/i18n'], function($, i18n) {
                 var button  = $('<button/>')
                     .addClass('btn btn-default')
                     .attr("title", el.label||i18n.msg._(action.help))
+                    .attr("data-toggle", "tooltip")
                     .append(
                         $("<i/>").addClass(el.icon||(action||{icon:'fa-exclamation-triangle'}).icon).addClass('fa')
                     );
@@ -114,11 +116,25 @@ define(['jquery','base/js/i18n'], function($, i18n) {
                 btn_group.append(button);
         });
         $(this.selector).append(btn_group);
+        // 把更新时间元素向后移动
+        if (this.selector === "#maintoolbar-container") {
+            $(this.selector).append($('#save_widget'))
+        }
+        // 激活tooltip
+        $('[data-toggle="tooltip"]').tooltip({
+            classes: {
+                "ui-tooltip": "custom-tooltips-cls"
+            },
+            position: {
+                my: "center",
+                at: "center bottom+28"
+            }
+        })
         return btn_group;
     };
 
     ToolBar.prototype.style = function () {
-        this.element.addClass('toolbar');
+        this.element.addClass(this.container_class);
     };
 
     /**
