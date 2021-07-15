@@ -360,7 +360,7 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if am and mt not in am:
             self.log.warning('Received message of type "%s", which is not allowed. Ignoring.' % mt)
         else:
-            if 'code' in msg['content']:
+            if 'code' in msg['content'] and msg['content']['code']:
                 check_content_security()
             stream = self.channels[channel]
             self.session.send(stream, msg)
