@@ -47,7 +47,7 @@ define([
                     // 'jupyter-notebook:show-all-run-time',
                     // 'jupyter-notebook:hide-all-run-time',
                     'jupyter-notebook:version-management',
-                    'jupyter-notebook:upload-file',
+                    // 'jupyter-notebook:upload-file',
                     'jupyter-notebook:notebook-report'
                 ],
                 'step_action_sections'
