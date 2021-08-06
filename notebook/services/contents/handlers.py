@@ -291,15 +291,15 @@ class ContentsHandler(APIHandler):
                 index = repo.index
                 index.remove(relative_python_file)
                 index.commit('delete file: %s' % relative_python_file)
-                remote = repo.remote()
-                remote.push()
+                # remote = repo.remote()
+                # remote.push()
 
                 # 删除文件相关的tag
                 for tag in repo.tags:
                     tag_contents = tag.name.split(DELIMITER)
                     if relative_python_file == tag_contents[1]:
                         repo.delete_tag(tag)
-                        remote.push(refspec=(':%s' % tag))  # remove from remote
+                        # remote.push(refspec=(':%s' % tag))  # remove from remote
         except Exception as e:
             self.log.error("delete notebook error: %s", str(e))
             errors = str(e)
@@ -429,10 +429,10 @@ class NotebookVersionHandler(IPythonHandler):
                         tag = DELIMITER.join((version, python_file, bk_username))
                         repo.create_tag(path=tag, ref=commit_id)
                         # 获取远程仓库
-                        remote = repo.remote()
+                        # remote = repo.remote()
                         # 推送本地修改到远程仓库
-                        remote.push(tag)
-                        remote.push()
+                        # remote.push(tag)
+                        # remote.push()
             else:
                 code = VERSION_NULL_CODE
         except Exception as e:
@@ -490,12 +490,12 @@ class NotebookVersionHandler(IPythonHandler):
             repo = Repo(git_dir)
             tag = u'%s' % repo.git.describe('--contains', commit_id)
             repo.delete_tag(tag)
-            remote = repo.remote()
-            remote.push(refspec=(':%s' % tag))  # remove from remote
+            # remote = repo.remote()
+            # remote.push(refspec=(':%s' % tag))  # remove from remote
 
             deleted_tag = DELIMITER.join((tag, '%s_%s' % (DELETE_TAG, str(time.time()))))
             repo.create_tag(path=deleted_tag, ref=commit_id)
-            remote.push(deleted_tag)
+            # remote.push(deleted_tag)
         except Exception as e:
             self.log.error("delete version error: %s", str(e))
             errors = str(e)
@@ -563,9 +563,9 @@ class NotebookVersionResetHandler(IPythonHandler):
                 ('snapshot_%s' % time.strftime("%Y.%m.%d-%H.%M.%S", time.localtime()), py_file_path, bk_username)
             )
             repo.create_tag(path=tag, ref=commit_id)
-            remote = repo.remote()
-            remote.push(tag)
-            remote.push()
+            # remote = repo.remote()
+            # remote.push(tag)
+            # remote.push()
 
             git = repo.git
             git.checkout(reset_commit_id, py_file_path)
