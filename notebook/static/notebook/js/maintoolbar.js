@@ -30,6 +30,19 @@ define([
 
     MainToolBar.prototype = Object.create(toolbar.ToolBar.prototype);
 
+
+    const operateGroup = [
+        'jupyter-notebook:save-notebook',
+        'jupyter-notebook:run-cell',
+        'jupyter-notebook:run-all-cells',
+        // 'jupyter-notebook:show-all-run-time',
+        // 'jupyter-notebook:hide-all-run-time',
+        'jupyter-notebook:version-management',
+        'jupyter-notebook:upload-file',
+        'jupyter-notebook:notebook-report'
+    ];
+
+    !window.git_available && operateGroup(3, 1); // 如果全局禁用版本管理，去除版本管理的按钮
     MainToolBar.prototype._make = function () {
         var grps = [
             [
@@ -40,16 +53,7 @@ define([
                 'insert_below_with_type'
             ],
             [
-                [
-                    'jupyter-notebook:save-notebook',
-                    'jupyter-notebook:run-cell',
-                    'jupyter-notebook:run-all-cells',
-                    // 'jupyter-notebook:show-all-run-time',
-                    // 'jupyter-notebook:hide-all-run-time',
-                    'jupyter-notebook:version-management',
-                    'jupyter-notebook:upload-file',
-                    'jupyter-notebook:notebook-report'
-                ],
+                operateGroup,
                 'step_action_sections'
             ]
         ];

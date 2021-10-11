@@ -974,7 +974,7 @@ define([
             help_index : 'fb',
             icon: 'icon-save-line-2',
             handler : function (env, event) {
-                if (event && event.type === 'keydown') {
+                if ((event && event.type === 'keydown') || !window.git_available) {
                     env.notebook.send_save_tips = true
                     env.notebook.save_checkpoint()
                     event.preventDefault()
