@@ -41,7 +41,7 @@ define([
         'jupyter-notebook:notebook-report'
     ];
 
-    !window.git_available && operateGroup(3, 1); // 如果全局禁用版本管理，去除版本管理的按钮
+    !window.git_available && operateGroup.splice(3, 1); // 如果全局禁用版本管理，去除版本管理的按钮
     MainToolBar.prototype._make = function () {
         var grps = [
             [

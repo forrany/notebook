@@ -976,7 +976,7 @@ define([
                 if ((event && event.type === 'keydown') || !window.git_available) {
                     env.notebook.send_save_tips = true;
                     env.notebook.save_checkpoint();
-                    event.preventDefault();
+                    event && event.preventDefault();
                     return false;
                 }
                 window.parent.postMessage({
