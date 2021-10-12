@@ -30,6 +30,18 @@ define([
 
     MainToolBar.prototype = Object.create(toolbar.ToolBar.prototype);
 
+    const operateGroup = [
+        'jupyter-notebook:save-notebook',
+        'jupyter-notebook:run-cell',
+        'jupyter-notebook:run-all-cells',
+        // 'jupyter-notebook:show-all-run-time',
+        // 'jupyter-notebook:hide-all-run-time',
+        'jupyter-notebook:version-management',
+        'jupyter-notebook:upload-file',
+        'jupyter-notebook:notebook-report'
+    ];
+
+    !window.git_available && operateGroup(3, 1); // 如果全局禁用版本管理，去除版本管理的按钮
     MainToolBar.prototype._make = function () {
         var grps = [
             [
@@ -40,16 +52,7 @@ define([
                 'insert_below_with_type'
             ],
             [
-                [
-                    'jupyter-notebook:save-notebook',
-                    'jupyter-notebook:run-cell',
-                    'jupyter-notebook:run-all-cells',
-                    // 'jupyter-notebook:show-all-run-time',
-                    // 'jupyter-notebook:hide-all-run-time',
-                    'jupyter-notebook:version-management',
-                    // 'jupyter-notebook:upload-file',
-                    'jupyter-notebook:notebook-report'
-                ],
+                operateGroup,
                 'step_action_sections'
             ]
         ];
@@ -71,7 +74,7 @@ define([
                         .append(rightSection);
         that.notebook.keyboard_manager.register_events(section);
         return section;
-    }
+    };
 
     // add a cell type drop down to the maintoolbar.
     // triggered when the pseudo action `<add_celltype_list>` is
@@ -101,7 +104,7 @@ define([
                 selected: data.cell_type,
                 notebook_id: window.__notebook_id__,
                 eventType: 'languageChanged'
-            }, '*')
+            }, '*');
 
             if (that.notebook.get_selected_cells_indices().length > 1) {
                 multiselect.show();
