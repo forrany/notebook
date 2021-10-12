@@ -96,6 +96,7 @@ class NotebookHandler(IPythonHandler):
             get_frontend_exporters=get_frontend_exporters,
             bk_doc_url=os.environ.get('BK_DOC_URL'),
             bk_run_version=os.environ.get('BK_RUN_VERSION'),
+            git_available=os.environ.get('GIT_AVAILABLE'),
             )
         )
 
