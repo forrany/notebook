@@ -784,20 +784,20 @@ define([
             handler : function(env) {
                 env.notebook.save_checkpoint().then(
                     function () {
-                        env.notebook.note_history()
+                        env.notebook.note_history();
                     },
                     function (e) {
                         var res = {
                             result: false,
                             message: e.xhr.statusText
-                        }
+                        };
                         utils.post_message({
                             eventType: 'noteVersionManagement',
                             res: res,
                             isShow: true
-                        })
+                        });
                     }
-                )
+                );
             }
         },
         'notebook-report': {
@@ -962,10 +962,9 @@ define([
             help: '上传文件',
             icon: 'icon-upload-cloud',
             handler: function (env) {
-                console.log('show upload file')
                 utils.post_message({
                     eventType: 'uploadFileShow',
-                })
+                });
             }
         },
         'save-notebook':{
@@ -974,19 +973,19 @@ define([
             help_index : 'fb',
             icon: 'icon-save-line-2',
             handler : function (env, event) {
-                if (event && event.type === 'keydown') {
-                    env.notebook.send_save_tips = true
-                    env.notebook.save_checkpoint()
-                    event.preventDefault()
-                    return false
+                if ((event && event.type === 'keydown') || !window.git_available) {
+                    env.notebook.send_save_tips = true;
+                    env.notebook.save_checkpoint();
+                    event.preventDefault();
+                    return false;
                 }
                 window.parent.postMessage({
                     isShow: true,
                     eventType: 'saveNoteConfirm',
                     notebook_id: window.__notebook_id__
-                }, '*')
+                }, '*');
                 if(event){
-                    event.preventDefault()
+                    event.preventDefault();
                 }
                 return false;
             }
