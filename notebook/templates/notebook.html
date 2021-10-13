@@ -14,6 +14,7 @@ window.mathjax_url = "{{mathjax_url}}";
 window.bk_doc_url = "{{bk_doc_url}}";
 window.bk_run_version = "{{bk_run_version}}"
 window.git_available = "{{git_available}}"
+window.helpDoc = `${window.bk_doc_url}${window.bk_run_version === 'openpass' ? '基础计算平台/产品白皮书/' : 'tencent/zh/'}user-guide/datalab/notebook/concepts.html`
 </script>
 
 <link rel="stylesheet" href="{{ static_url("components/bootstrap-tour/build/css/bootstrap-tour.min.css") }}" type="text/css" />
@@ -52,7 +53,7 @@ data-notebook-path="{{notebook_path | urlencode}}"
 
 {% block header %}
 <div id="menubar-container" class="container">
-    <a class="document-url" href="{{bk_doc_url}}{{bk_run_version === 'openpass' ？ '基础计算平台/产品白皮书/' : 'tencent/zh/'}}user-guide/datalab/notebook/concepts.html" target="_blank">帮助文档</a>
+    <a class="document-url" href="" target="_blank">帮助文档</a>
 <div id="menubar" style="display: none;">
     <div id="menus" class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
@@ -369,6 +370,8 @@ data-notebook-path="{{notebook_path | urlencode}}"
 {{super()}}
 <script type="text/javascript">
     sys_info = {{sys_info|safe}};
+    let docElement = document.querySelector('.document-url');
+    docElement && docElement.href=window.helpDoc;
 </script>
 
 <script src="{{ static_url("components/text-encoding/lib/encoding.js") }}" charset="utf-8"></script>
