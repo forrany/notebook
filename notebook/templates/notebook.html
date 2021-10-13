@@ -52,7 +52,7 @@ data-notebook-path="{{notebook_path | urlencode}}"
 
 {% block header %}
 <div id="menubar-container" class="container">
-    <a class="document-url" href="{{bk_doc_url}}tencent/zh/user-guide/datalab/notebook/concepts.html" target="_blank">帮助文档</a>
+    <a class="document-url" href="{{bk_doc_url}}{{bk_run_version === 'openpass' ？ '基础计算平台/产品白皮书/' : 'tencent/zh/'}}user-guide/datalab/notebook/concepts.html" target="_blank">帮助文档</a>
 <div id="menubar" style="display: none;">
     <div id="menus" class="navbar navbar-default" role="navigation">
         <div class="container-fluid">
