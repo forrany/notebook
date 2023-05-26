@@ -508,6 +508,8 @@ class IPythonHandler(AuthenticatedHandler):
     
     @property
     def template_namespace(self):
+        language = self.get_cookie('blueking_language') \
+            if self.get_cookie('blueking_language') else self.request.headers.get('Accept-Language', '')
         return dict(
             base_url=self.base_url,
             default_url=self.default_url,
@@ -524,8 +526,7 @@ class IPythonHandler(AuthenticatedHandler):
             xsrf_form_html=self.xsrf_form_html,
             token=self.token,
             xsrf_token=self.xsrf_token.decode('utf8'),
-            nbjs_translations=json.dumps(combine_translations(
-                self.request.headers.get('Accept-Language', ''))),
+            nbjs_translations=json.dumps(combine_translations(language)),
             **self.jinja_template_vars
         )
     
