@@ -31,7 +31,7 @@ define([
     cellfixedtoolbar
     ) {
     "use strict";
-    function encodeURIandParens(uri){return encodeURI(uri).replace('(','%28').replace(')','%29')}
+    function encodeURIandParens(uri){return encodeURI(uri).replace('(','%28').replace(')','%29');}
 
     var Cell = cell.Cell;
 
@@ -121,8 +121,8 @@ define([
             notebook: this.notebook});
         inner_cell.append(this.celltoolbar.element);
         var input_area = $('<div/>').addClass('input_area').attr("aria-label", i18n.msg._("Edit Markup Text here"));
-        var markdown_wrapper = $('<textarea/>').addClass('markdown_editor')
-        input_area.append(markdown_wrapper)
+        var markdown_wrapper = $('<textarea/>').addClass('markdown_editor');
+        input_area.append(markdown_wrapper);
         this.markdown_editor = Mditor.fromTextarea(markdown_wrapper.get(0));
         
         /**
@@ -144,12 +144,12 @@ define([
                 setTimeout(() => {
                     if (!that.selected) { // 如果已经没有被选择，说明点击了其他Cell
                         that.events.trigger('command_mode.Cell', {cell: that});
-                        that.execute()
+                        that.execute();
                     }
                 }, 100);
-            }).on('keydown', $.proxy(this.handle_keyevent,this))
-            that.markdown_editor.focus()
-        })
+            }).on('keydown', $.proxy(this.handle_keyevent,this));
+            that.markdown_editor.focus();
+        });
 
         // The tabindex=-1 makes this div focusable.
         var render_area = $('<div/>').addClass('text_cell_render rendered_html')
@@ -168,14 +168,14 @@ define([
         cell.append(action_bar_container);
         
         const btns = [{
-            label: '代码',
+            label: i18n.msg._('code'),
             icon: 'icon-add-9',
             cell_type: 'code'
         }, {
-            label: '文本',
+            label: i18n.msg._('save'),
             icon: 'icon-add-9',
             cell_type: 'markdown'
-        }]
+        }];
         const btn_group = $('<div></div>').addClass('btn-group');
         for (let i = 0; i < btns.length; i++) {
             var button  = $('<button/>')
@@ -189,16 +189,16 @@ define([
                     $('<span/>').text(i18n.msg._(btns[i].label)).addClass('toolbar-btn-label')
                 );
             button.click(function () {
-                const index = that.notebook.find_cell_index(that)
+                const index = that.notebook.find_cell_index(that);
                 that.notebook.insert_cell_below(btns[i].cell_type, index);
                 that.notebook.select(index + 1, true);
                 that.notebook.focus_cell();
-            })
-            btn_group.append(button)
+            });
+            btn_group.append(button);
         }
         const bottom_hover_bars = $('<div></div>')
             .addClass('cell-empty-hover cell-insert-bar')
-            .append(btn_group)
+            .append(btn_group);
 
         cell.append(bottom_hover_bars);
         this.element = cell;
@@ -452,7 +452,7 @@ define([
             that.add_attachment(key, blob.type, d[1]);
             var img_md = '![' + key + '](attachment:' + key + ')';
             that.code_mirror.replaceRange(img_md, pos);
-        }
+        };
         reader.readAsDataURL(blob);
     };
 
@@ -506,7 +506,7 @@ define([
                             .attr('href', '#' + hash)
                             .text('¶')
                             .on('click',function(){
-                                setTimeout(function(){that.unrender(); that.render()}, 100)
+                                setTimeout(function(){that.unrender(); that.render();}, 100);
                             })
                     );
                 });
@@ -541,7 +541,7 @@ define([
 
         this.element.dblclick(function () {
             that.unrender();
-            that.markdown_editor.focus()
+            that.markdown_editor.focus();
         });
     };
 

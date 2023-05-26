@@ -2040,3 +2040,11 @@ msgstr "文件名已经存在 \"%s\", 需要替换现有文件?"
 msgid "Replace file"
 msgstr "替换文件"
 
+#: 手动替换的国际化文件
+
+msgid "code"
+msgstr "代码"
+
+msgid "text"
+msgstr "文本"
+

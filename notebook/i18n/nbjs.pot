@@ -1933,3 +1933,10 @@ msgstr ""
 msgid "Replace file"
 msgstr ""
 
+#: 手动替换的国际化文件
+msgid "code"
+msgstr "代码"
+
+msgid "text"
+msgstr "文本"
+

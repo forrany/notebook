@@ -132,9 +132,9 @@ define([
             function() { that.auto_highlight(); }
         );
         // 执行时间
-        this.execute_timer = null
-        this.execute_time = 0
-        this.execute_unit_is_ms = true
+        this.execute_timer = null;
+        this.execute_time = 0;
+        this.execute_unit_is_ms = true;
     };
 
     CodeCell.options_default = {
@@ -190,8 +190,8 @@ define([
         stop_this_cell.find('span.stop-btn').click(function (event) {
             event.stopImmediatePropagation();
             if (that.kernel) {
-                that.kernel.interrupt()
-                $('.stop-btn').LoadingOverlay('show')
+                that.kernel.interrupt();
+                $('.stop-btn').LoadingOverlay('show');
             }
         });
 
@@ -231,14 +231,14 @@ define([
         });
 
         const btns = [{
-            label: '代码',
+            label: i18n.msg._('code'),
             icon: 'icon-add-9',
             cell_type: 'code'
         }, {
-            label: '文本',
+            label: i18n.msg._('save'),
             icon: 'icon-add-9',
             cell_type: 'markdown'
-        }]
+        }];
         const btn_group = $('<div></div>').addClass('btn-group');
         for (let i = 0; i < btns.length; i++) {
             var button  = $('<button/>')
@@ -252,16 +252,16 @@ define([
                     $('<span/>').text(i18n.msg._(btns[i].label)).addClass('toolbar-btn-label')
                 );
             button.click(function () {
-                const index = that.notebook.find_cell_index(that)
+                const index = that.notebook.find_cell_index(that);
                 that.notebook.insert_cell_below(btns[i].cell_type, index);
                 that.notebook.select(index + 1, true);
                 that.notebook.focus_cell();
-            })
-            btn_group.append(button)
+            });
+            btn_group.append(button);
         }
         const bottom_hover_bars = $('<div></div>')
             .addClass('cell-empty-hover cell-insert-bar')
-            .append(btn_group)
+            .append(btn_group);
 
         cell.append(input)
             .append(output)
@@ -415,7 +415,7 @@ define([
         }
 
         this.clear_output(false, true);
-        var cell_content = this.get_text()
+        var cell_content = this.get_text();
         var old_msg_id = this.last_msg_id;
         if (old_msg_id) {
             this.kernel.clear_callbacks_for_msg(old_msg_id);
@@ -430,31 +430,31 @@ define([
         this.set_input_prompt('*');
         this.element.addClass("running");
 
-        var execute_timer_span = this.element.find('span.running-time')
-        this.execute_time = 0
-        execute_timer_span.text(this.execute_time)
+        var execute_timer_span = this.element.find('span.running-time');
+        this.execute_time = 0;
+        execute_timer_span.text(this.execute_time);
         if (this.execute_timer) {
-            clearInterval(this.execute_timer)
+            clearInterval(this.execute_timer);
         }
         this.execute_timer = setInterval(() => {
-            this.execute_time += 0.1
-            execute_timer_span.text(this.execute_time.toFixed(1) + ' s')
-            this.execute_unit_is_ms = false
-        }, 100)
-        this.element.find('span.running-time').text()
+            this.execute_time += 0.1;
+            execute_timer_span.text(this.execute_time.toFixed(1) + ' s');
+            this.execute_unit_is_ms = false;
+        }, 100);
+        this.element.find('span.running-time').text();
         var callbacks = this.get_callbacks();
         
         this.last_msg_id = this.kernel.execute(cell_content, callbacks, {silent: false, store_history: true,
             stop_on_error : stop_on_error, cell_id: this.cell_id});
         CodeCell.msg_cells[this.last_msg_id] = this;
-        this.output_area.update_cell_content(cell_content)
+        this.output_area.update_cell_content(cell_content);
         this.render();
         this.events.trigger('execute.CodeCell', {cell: this});
         var that = this;
         function handleFinished(evt, data) {
             if (that.kernel.id === data.kernel.id && that.last_msg_id === data.msg_id) {
                     that.events.trigger('finished_execute.CodeCell', {cell: that});
-                    that.notebook.save_checkpoint()
+                    that.notebook.save_checkpoint();
                 that.events.off('finished_iopub.Kernel', handleFinished);
               }
         }
@@ -501,25 +501,25 @@ define([
     CodeCell.prototype._handle_execute_reply = function (msg) {
         // 显示执行时间
         if (this.execute_timer) {
-            clearInterval(this.execute_timer)
+            clearInterval(this.execute_timer);
         }
-        var start_time = moment(msg.metadata.started)
-        var end_time = msg.header.date
+        var start_time = moment(msg.metadata.started);
+        var end_time = msg.header.date;
         if (end_time) {
-            end_time = moment(end_time)
-            var exec_time = -start_time.diff(end_time)
-            var execute_timer_span = this.element.find('span.running-time')
+            end_time = moment(end_time);
+            var exec_time = -start_time.diff(end_time);
+            var execute_timer_span = this.element.find('span.running-time');
             if (this.execute_unit_is_ms) {
-                execute_timer_span.text(Math.round(exec_time) + ' ms')
+                execute_timer_span.text(Math.round(exec_time) + ' ms');
             } else {
-                exec_time = (exec_time / 1000).toFixed(1)
-                execute_timer_span.text(exec_time + ' s')
+                exec_time = (exec_time / 1000).toFixed(1);
+                execute_timer_span.text(exec_time + ' s');
             }
         }
 
         this.set_input_prompt(msg.content.execution_count);
         this.element.removeClass("running");
-        $('.stop-btn').LoadingOverlay('hide')
+        $('.stop-btn').LoadingOverlay('hide');
         this.events.trigger('set_dirty.Notebook', {value: true});
     };
 
@@ -658,7 +658,7 @@ define([
 
     CodeCell.prototype.fromJSON = function (data) {
         Cell.prototype.fromJSON.apply(this, arguments);
-        this.output_area.update_cell_content(data.source)
+        this.output_area.update_cell_content(data.source);
         if (data.cell_type === 'code') {
             if (data.source !== undefined) {
                 this.set_text(data.source);
