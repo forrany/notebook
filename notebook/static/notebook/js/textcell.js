@@ -172,7 +172,7 @@ define([
             icon: 'icon-add-9',
             cell_type: 'code'
         }, {
-            label: i18n.msg._('save'),
+            label: i18n.msg._('text'),
             icon: 'icon-add-9',
             cell_type: 'markdown'
         }];
