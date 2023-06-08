@@ -510,6 +510,8 @@ class IPythonHandler(AuthenticatedHandler):
     def template_namespace(self):
         language = self.get_cookie('blueking_language') \
             if self.get_cookie('blueking_language') else self.request.headers.get('Accept-Language', '')
+        language = 'zh-CN' if language.lower() == 'zh-cn' else language
+        self.log.info("language: %s" % language)
         return dict(
             base_url=self.base_url,
             default_url=self.default_url,
