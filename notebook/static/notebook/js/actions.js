@@ -158,9 +158,9 @@ define([
             }
         },
         'run-cell':{
-            cmd: i18n.msg._('run selected cells'),
+            cmd: i18n.msg._('Run the selected cells'),
             icon: 'icon-play-6',
-            help    : i18n.msg._('run selected cells'),
+            help    : i18n.msg._('Run the selected cells'),
             help_index : 'bb',
             handler : function (env) {
                 env.notebook.execute_selected_cells();
@@ -176,8 +176,8 @@ define([
         },
         'run-all-cells': {
             icon: 'fa-forward',
-            cmd: i18n.msg._('run all cells'),
-            help: i18n.msg._('run all cells'),
+            cmd: i18n.msg._('Run all cells'),
+            help: i18n.msg._('Run all cells'),
             help_index: 'bd',
             handler: function (env) {
                 env.notebook.execute_all_cells();
@@ -969,7 +969,7 @@ define([
         },
         'save-notebook':{
             cmd: i18n.msg._('save notebook'),
-            help: i18n.msg._("Save and Checkpoint"),
+            help: i18n.msg._("Save and checkpoint"),
             help_index : 'fb',
             icon: 'icon-save-line-2',
             handler : function (env, event) {

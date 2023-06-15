@@ -158,7 +158,7 @@ msgid "Rename..."
 msgstr ""
 
 #: notebook/templates/notebook.html:93
-msgid "Save and Checkpoint"
+msgid "Save and checkpoint"
 msgstr ""
 
 #: notebook/templates/notebook.html:96

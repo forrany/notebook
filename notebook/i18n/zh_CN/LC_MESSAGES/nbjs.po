@@ -233,7 +233,7 @@ msgstr "运行代码块, 选择下面的代码块"
 
 #: notebook/static/notebook/js/actions.js:159
 #: notebook/static/notebook/js/actions.js:160
-msgid "run selected cells"
+msgid "Run the selected cells"
 msgstr "运行选中的代码块"
 
 #: notebook/static/notebook/js/actions.js:167
@@ -243,7 +243,7 @@ msgstr "运行代码块并且插入下面"
 
 #: notebook/static/notebook/js/actions.js:175
 #: notebook/static/notebook/js/actions.js:176
-msgid "run all cells"
+msgid "Run all cells"
 msgstr "运行所有的代码块"
 
 #: notebook/static/notebook/js/actions.js:183
@@ -656,7 +656,7 @@ msgid "save notebook"
 msgstr "保存代码"
 
 #: notebook/static/notebook/js/actions.js:836
-msgid "Save and Checkpoint"
+msgid "Save and checkpoint"
 msgstr "保存并检查"
 
 #: notebook/static/notebook/js/notebook.js:3384
@@ -1562,7 +1562,7 @@ msgstr "最后检查: %s "
 
 #: notebook/static/notebook/js/savewidget.js:193
 #, python-format
-msgid "Last Save Time: %s"
+msgid "Last save time: %s"
 msgstr "上次保存时间: %s "
 
 #: notebook/static/notebook/js/savewidget.js:193
@@ -2042,9 +2042,6 @@ msgstr "替换文件"
 
 #: 手动替换的国际化文件
 
-msgid "code"
-msgstr "代码"
-
-msgid "text"
+msgid "Text"
 msgstr "文本"
 

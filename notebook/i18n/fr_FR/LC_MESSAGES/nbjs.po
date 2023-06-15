@@ -254,7 +254,7 @@ msgstr "exécuter la cellule, sélectionner la suivante"
 
 #: notebook/static/notebook/js/actions.js:159
 #: notebook/static/notebook/js/actions.js:160
-msgid "run selected cells"
+msgid "Run the selected cells"
 msgstr "exécuter les cellules sélectionnées"
 
 #: notebook/static/notebook/js/actions.js:167
@@ -264,7 +264,7 @@ msgstr "exécuter la cellule et insérer après"
 
 #: notebook/static/notebook/js/actions.js:175
 #: notebook/static/notebook/js/actions.js:176
-msgid "run all cells"
+msgid "Run all cells"
 msgstr "exécuter toutes les cellules"
 
 #: notebook/static/notebook/js/actions.js:183
@@ -684,7 +684,7 @@ msgid "save notebook"
 msgstr "enregistrer le notebook"
 
 #: notebook/static/notebook/js/actions.js:836
-msgid "Save and Checkpoint"
+msgid "Save and checkpoint"
 msgstr "Créer une nouvelle sauvegarde"
 
 #: notebook/static/notebook/js/cell.js:79

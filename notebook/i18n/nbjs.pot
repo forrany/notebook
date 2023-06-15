@@ -233,7 +233,7 @@ msgstr ""
 
 #: notebook/static/notebook/js/actions.js:159
 #: notebook/static/notebook/js/actions.js:160
-msgid "run selected cells"
+msgid "Run the selected cells"
 msgstr ""
 
 #: notebook/static/notebook/js/actions.js:167
@@ -243,7 +243,7 @@ msgstr ""
 
 #: notebook/static/notebook/js/actions.js:175
 #: notebook/static/notebook/js/actions.js:176
-msgid "run all cells"
+msgid "Run all cells"
 msgstr ""
 
 #: notebook/static/notebook/js/actions.js:183
@@ -656,7 +656,7 @@ msgid "save notebook"
 msgstr ""
 
 #: notebook/static/notebook/js/actions.js:836
-msgid "Save and Checkpoint"
+msgid "Save and checkpoint"
 msgstr ""
 
 #: notebook/static/notebook/js/cell.js:79
@@ -758,7 +758,7 @@ msgstr ""
 
 #: notebook/static/notebook/js/maintoolbar.js:76
 msgid "Code"
-msgstr ""
+msgstr "Code"
 
 #: notebook/static/notebook/js/maintoolbar.js:77
 msgid "Markdown"
@@ -1937,6 +1937,6 @@ msgstr ""
 msgid "code"
 msgstr "代码"
 
-msgid "text"
+msgid "Text"
 msgstr "文本"
 

@@ -231,11 +231,11 @@ define([
         });
 
         const btns = [{
-            label: i18n.msg._('code'),
+            label: i18n.msg._('Code'),
             icon: 'icon-add-9',
             cell_type: 'code'
         }, {
-            label: i18n.msg._('text'),
+            label: i18n.msg._('Text'),
             icon: 'icon-add-9',
             cell_type: 'markdown'
         }];

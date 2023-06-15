@@ -46,8 +46,8 @@ define([
         var grps = [
             [
                 [ 
-                    { action: 'jupyter-notebook:insert-cell-code', label: i18n.msg._('code') }, 
-                    { action: 'jupyter-notebook:insert-cell-markdown', label: i18n.msg._('text') }
+                    { action: 'jupyter-notebook:insert-cell-code', label: i18n.msg._('Code') }, 
+                    { action: 'jupyter-notebook:insert-cell-markdown', label: i18n.msg._('Text') }
                 ],
                 'insert_below_with_type'
             ],
