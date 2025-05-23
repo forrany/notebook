@@ -87,6 +87,7 @@ define([
      */
     function Notebook(selector, options) {
         this.username = ''
+        this.tenant_id = ''
         this.awaitGetUsername = null
         this.send_save_tips = false
         this.bkInfo = {}
@@ -468,6 +469,7 @@ define([
                 this.note_rollback(event.data.commitId)
             } else if (event.data.eventType === 'getUsername') {
                 this.username = event.data.username
+                this.tenant_id = event.data.tenant_id
                 this.awaitGetUsername && this.awaitGetUsername()
             }
         })
@@ -2329,7 +2331,8 @@ define([
             notebook_name: this.notebook_name,
             kernel_name: kernel_name,
             notebook: this,
-            username: this.username
+            username: this.username,
+            tenant_id: this.tenant_id
         };
 
         var success = $.proxy(this._session_started, this);

@@ -27,7 +27,7 @@ define([
      * @param {string} ws_url - the websockets URL
      * @param {string} name - the kernel type (e.g. python3)
      */
-    var Kernel = function (kernel_service_url, ws_url, name, username) {
+    var Kernel = function (kernel_service_url, ws_url, name, username, tenant_id) {
         this.events = events;
 
         this.id = null;
@@ -43,7 +43,8 @@ define([
             this.ws_url = location.protocol.replace('http', 'ws') + "//" + location.host;
         }
 
-        this.username = username;
+        this.username = username || "";
+        this.tenant_id = tenant_id || "";
         this.session_id = utils.uuid();
         this._msg_callbacks = {};
         this._msg_callbacks_overrides = {};
@@ -81,6 +82,7 @@ define([
             header : {
                 msg_id : utils.uuid(),
                 username : this.username,
+                tenant_id : this.tenant_id,
                 session : this.session_id,
                 msg_type : msg_type,
                 version : "5.2",

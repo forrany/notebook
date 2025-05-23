@@ -28,7 +28,8 @@ define([
      */
     var Session = function (options) {
         this.id = null;
-        this.username = options.username
+        this.username = options.username || "username";
+        this.tenant_id = options.tenant_id || "";
         this.notebook_model = {
             path: options.notebook_path
         };
@@ -106,10 +107,11 @@ define([
         var on_success = function (data, status, xhr) {
             if (that.kernel) {
                 that.kernel.name = that.kernel_model.name;
-                that.kernel.username = that.username
+                that.kernel.username = that.username;
+                that.kernel.tenant_id = that.tenant_id;
             } else {
                 var kernel_service_url = utils.url_path_join(that.base_url, "api/kernels");
-                that.kernel = new kernel.Kernel(kernel_service_url, that.ws_url, that.kernel_model.name, that.username);
+                that.kernel = new kernel.Kernel(kernel_service_url, that.ws_url, that.kernel_model.name, that.username, that.tenant_id);
             }
             that.events.trigger('kernel_created.Session', {session: that, kernel: that.kernel});
             that.kernel._kernel_created(data.kernel);
